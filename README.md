@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# thomasbrandonhays.com
 
-## Getting Started
+Personal portfolio for Thomas Brandon Hays — a developer working across HTML email, Salesforce Marketing Cloud, HTML5 animated display, and front-end web.
 
-First, run the development server:
+The site is built around showing the work rather than describing it: banner ads run live at true IAB dimensions with real file sizes, and email templates render in isolated frames with desktop, mobile, and dark-mode views.
+
+**Live:** [thomasbrandonhays.com](https://thomasbrandonhays.com)
+
+---
+
+## Stack
+
+| | |
+|---|---|
+| Framework | Next.js (App Router, `output: 'standalone'`) |
+| UI | React, TypeScript |
+| Styling | Tailwind CSS |
+| Host | DigitalOcean droplet — Ubuntu, nginx reverse proxy, systemd |
+| TLS | Let's Encrypt via certbot |
+| CI/CD | GitHub Actions — build, rsync, restart |
+| Secrets | Doppler |
+| Transactional email | Resend |
+
+## Local development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Requires the Node version in `.nvmrc`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build    # produces .next/standalone
+npm run lint
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Work samples
 
-## Learn More
+Banner units and email templates are served as untouched static files from `public/work/`, outside the bundler, so production ad units and table-based email HTML render exactly as they do in an ad server or an inbox:
 
-To learn more about Next.js, take a look at the following resources:
+```
+public/work/ads/{campaign}/{size}/index.html
+public/work/email/{slug}/index.html
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+File sizes shown in the UI are computed at build time from the actual assets rather than hardcoded.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deployment
 
-## Deploy on Vercel
+Pushes to `main` trigger a GitHub Actions run that installs dependencies, builds, assembles the standalone bundle with `.next/static` and `public`, rsyncs it to the droplet over SSH, and restarts the systemd service. nginx proxies to the Node process on loopback; only 22, 80, and 443 are exposed.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## License
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Code is MIT. Written content, design, and work samples are not — please don't reuse those.
