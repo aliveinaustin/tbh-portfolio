@@ -18,7 +18,6 @@ import ConsolePanel from "@/components/ui/ConsolePanel";
 import EditorialCard from "@/components/ui/EditorialCard";
 import MetricCluster from "@/components/ui/MetricCluster";
 import FormField from "@/components/ui/FormField";
-import Hero from "@/components/Hero";
 function Specimen({ name, children }: { name: string; children: ReactNode }) {
     return (
         <div className="flex flex-col gap-3 border-t border-border-dim pt-4">
@@ -63,9 +62,9 @@ export default function LabPage() {
                     </Specimen>
 
                     <Specimen name="CategoryTag">
-                        <CategoryTag index="01-DS" label="SFMC & EMAIL" />
-                        <CategoryTag index="02-DA" label="HTML5 DISPLAY" />
-                        <CategoryTag index="03-FE" label="FRONT-END WEB" />
+                        <CategoryTag label="SFMC & EMAIL" />
+                        <CategoryTag label="HTML5 DISPLAY" />
+                        <CategoryTag label="FRONT-END WEB" />
                     </Specimen>
 
                     <Specimen name="Button">
