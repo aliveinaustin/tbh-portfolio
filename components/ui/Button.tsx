@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-
+import { cn } from "@/lib/cn";
 type Variant = "primary" | "wire" | "primaryInvert";
 type ButtonProps = {
   href?: string;
@@ -10,9 +10,10 @@ type ButtonProps = {
   variant?: Variant;
   onClick?: () => void;
   type?: "button" | "submit";
+  className?: string; //layout only (display, margin, alignment, width)
 };
 
-const base = "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full px-6 py-2.5 text-label leading-none transition-colors active:scale-95 sm:w-auto"
+const base = "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full px-6 py-2.5 text-label transition motion-safe:active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
 
 const variants = {
   primary: "bg-accent text-bg hover:bg-text-dim",
@@ -20,8 +21,8 @@ const variants = {
   primaryInvert: "bg-text-invert text-surface-invert hover:bg-text-invert-dim",
 } satisfies Record<Variant, string>;
 
-export default function Button({ href, icon, iconPosition = "end", children, brackets, variant = "primary", onClick, type = "button", }: ButtonProps) {
-  const className = `${base} ${variants[variant]}`;
+export default function Button({ href, icon, iconPosition = "end", children, brackets, variant = "primary", onClick, type = "button", className }: ButtonProps) {
+  const classes = cn(base, variants[variant], className);
   const content = (
     <>
       {icon && iconPosition === "start" && <span aria-hidden="true">{icon}</span>}
@@ -34,14 +35,14 @@ export default function Button({ href, icon, iconPosition = "end", children, bra
 
   if (href) {
     return (
-      <a href={href} className={className}>
+      <a href={href} onClick={onClick} className={classes}>
         {content}
       </a>
     );
   }
 
   return (
-    <button type={type} onClick={onClick} className={className}>
+    <button type={type} onClick={onClick} className={classes}>
       {content}
     </button>
   );

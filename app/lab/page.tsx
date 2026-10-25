@@ -69,8 +69,9 @@ export default function LabPage() {
                     </Specimen>
 
                     <Specimen name="Button">
-                        <Button href="#" icon="&rarr;" brackets>Default</Button>
+                        <Button href="#" icon="&rarr;" brackets>Default Primary</Button>
                         <Button variant="wire" icon="&darr;">Wire</Button>
+                        <Button variant="primaryInvert" icon="&darr;">primaryInvert</Button>
                     </Specimen>
 
                     <Specimen name="CopyPill">
@@ -142,10 +143,6 @@ export default function LabPage() {
                             <FormField id="msg" label="Message" type="textarea" placeholder="Project scope, timeline, budget range" />
                             <FormField id="broken" label="Errored Field" error="This field is required" />
                         </form>
-                    </Specimen>
-
-                    <Specimen name="Hero">
-                        <Hero />
                     </Specimen>
                 </div>
             </Section >

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import SkipLink from "@/components/ui/SkipLink";
+import UtilityBar from "@/components/ui/UtilityBar";
+import Header from "@/components/Header"
 
 const inter = Inter({
   variable: "--font-inter",
@@ -14,9 +16,10 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Thomas Brandon Hays — HTML Email, Salesforce Marketing Cloud & Front-End Developer",
+  title: "Thomas B. Hays — HTML Email, SFMC & Front-End Developer",
   description:
-    "Developer working across HTML email, Salesforce Marketing Cloud, HTML5 animated display, and front-end web.",
+    "HTML email that holds up in Outlook, HTML5 banners that fit the file-size budget, and web front ends that load fast. 11 years of agency production.",
+  metadataBase: new URL("https://thomasbrandonhays.com"),
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -27,7 +30,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <SkipLink />
-        {/* <Header /> */}
+        <UtilityBar />
+        <Header />
         <main id="main" tabIndex={-1} className="flex-1 outline-none">
           {children}
         </main>

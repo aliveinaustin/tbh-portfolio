@@ -181,6 +181,7 @@
   line-height: 1.33;
   letter-spacing: 0.2em;
   text-transform: uppercase;
+  text-box: trim-both cap alphabetic;
 }
 
 @utility text-code {
@@ -201,9 +202,22 @@
 
 @layer base {
   html {
-    scroll-behavior: smooth;
-    scroll-padding-top: 5rem;
+    @variant motion-safe {
+      scroll-behavior: smooth;
+    }
+
+    /* keep in sync with Header: mobile h-16; desktop h-20 + lg:py-3 */
+    scroll-padding-top: 4rem;
+
+    @variant lg {
+      scroll-padding-top: 6.5rem;
+    }
+
+    &:has(dialog[open]:modal) {
+      overflow: hidden;
+    }
   }
+
 
   body {
     background: var(--bg);
@@ -243,6 +257,13 @@
     border-left: 5px solid transparent;
     border-right: 5px solid transparent;
     border-top: 10px solid currentColor;
+  }
+
+  .bar {
+    width: 25px;
+    height: 3px;
+    background-color: white;
+    transition: 0.3s;
   }
 }
 
