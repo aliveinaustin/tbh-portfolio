@@ -4,6 +4,7 @@ import "./globals.css";
 import SkipLink from "@/components/ui/SkipLink";
 import UtilityBar from "@/components/ui/UtilityBar";
 import Header from "@/components/Header"
+import Footer from "@/components/Footer"
 
 const inter = Inter({
   variable: "--font-inter",
@@ -35,7 +36,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <main id="main" tabIndex={-1} className="flex-1 outline-none">
           {children}
         </main>
-        {/* <Footer /> */}
+        <Footer />
       </body>
     </html>
   );

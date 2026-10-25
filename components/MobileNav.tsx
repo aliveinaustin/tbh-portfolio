@@ -33,7 +33,7 @@ export default function MobileNav() {
                 aria-label="Open menu"
                 aria-expanded={isOpen}
                 aria-controls="mobile-nav"
-                className="inline-flex size-11 items-center justify-center rounded-md text-text lg:hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                className="inline-flex size-11 items-center justify-center rounded-md text-text lg:hidden"
             >
                 <Menu size={24} aria-hidden="true" />
             </button>
@@ -47,7 +47,7 @@ export default function MobileNav() {
                 <div className="flex h-16 items-center justify-between gap-4 border-b border-border px-margin">
                     <WordMark onClick={close} />
                     <form method="dialog">
-                        <button className="inline-flex items-center gap-2 rounded-md border border-border px-4 py-3 text-text text-label  focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+                        <button className="inline-flex items-center gap-2 rounded-md border border-border px-4 py-3 text-text text-label">
                             <X size={16} aria-hidden="true" />
                             <span className="max-[24rem]:sr-only">Close</span>
                         </button>

@@ -13,7 +13,7 @@ export default function Header() {
                             <ul className="flex flex-row text-label gap-8">
                                 {navItems.map((item) => (
                                     <li key={item.href}>
-                                        <a href={item.href} className="whitespace-nowrap text-text hover:text-text-muted rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+                                        <a href={item.href} className="whitespace-nowrap text-text hover:text-text-muted rounded-sm">
                                             {item.label}
                                         </a>
                                     </li>

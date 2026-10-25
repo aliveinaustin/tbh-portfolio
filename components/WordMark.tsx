@@ -13,7 +13,7 @@ export default function WordMark({ onClick, showTitle = true, className }: WordM
             href="#hero"
             onClick={onClick}
             className={cn(
-                "flex min-w-0 items-center gap-6 rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
+                "flex min-w-0 items-center gap-6 rounded-md",
                 className
             )}
         >
