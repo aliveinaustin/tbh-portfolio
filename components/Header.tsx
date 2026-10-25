@@ -1,7 +1,9 @@
+import Link from "next/link";
 import Button from "@/components/ui/Button"
 import MobileNav from "@/components/MobileNav"
 import { navItems } from "@/lib/navItems";
 import WordMark from "@/components/WordMark";
+
 export default function Header() {
     return (
         <header className="sticky top-0 z-50 lg:py-3">
@@ -13,15 +15,15 @@ export default function Header() {
                             <ul className="flex flex-row text-label gap-8">
                                 {navItems.map((item) => (
                                     <li key={item.href}>
-                                        <a href={item.href} className="whitespace-nowrap text-text hover:text-text-muted rounded-sm">
+                                        <Link href={item.href} className="whitespace-nowrap text-text hover:text-text-muted rounded-sm">
                                             {item.label}
-                                        </a>
+                                        </Link>
                                     </li>
                                 ))}
                             </ul>
                         </nav>
 
-                        <Button href="#contact" icon="&rarr;" brackets className="hidden md:inline-flex">Initiate Project</Button>
+                        <Button href="#contact" icon="&rarr;" className="hidden md:inline-flex">Initiate Project</Button>
                         <MobileNav />
                     </div>
                 </div>

@@ -17,15 +17,15 @@ export default function Hero() {
                             <h1 className="text-display -mt-2">I build the code that marketing campaigns actually run on.</h1>
                             <p className="text-body text-text-muted max-w-prose">Email that holds up in Outlook, banners that fit the file-size budget, and web front ends that load fast. HTML email, SFMC, HTML5 display, React, and WordPress, built over 11 years at an agency.</p>
                             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                                <Button href="#contact" icon="→" brackets>Initiate Project / Hire</Button>
-                                <Button href="/resume.pdf" icon={<FileDown size={14} />} iconPosition="start" variant="wire" brackets>Download Resume</Button>
+                                <Button href="#contact" icon="→">Initiate Project / Hire</Button>
+                                <Button href="/resume.pdf" download icon={<FileDown size={14} />} iconPosition="start" variant="wire">Download Resume</Button>
                             </div>
                         </div>
                         <div className="border-t border-border pt-8">
                             <div className="flex flex-wrap gap-2">
-                                <CategoryTag index="01-DS" label="SFMC & Email" />
-                                <CategoryTag index="02-DA" label="HTML5 Display" />
-                                <CategoryTag index="03-FE" label="Front-End Web" />
+                                <CategoryTag label="SFMC & Email" />
+                                <CategoryTag label="HTML5 Display" />
+                                <CategoryTag label="Front-End Web" />
                             </div>
                         </div>
                     </div>

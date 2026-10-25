@@ -17,7 +17,10 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Thomas B. Hays — HTML Email, SFMC & Front-End Developer",
+  title: {
+    default: "Thomas B. Hays — HTML Email & SFMC Developer",
+    template: "%s — Thomas B. Hays",
+  },
   description:
     "HTML email that holds up in Outlook, HTML5 banners that fit the file-size budget, and web front ends that load fast. 11 years of agency production.",
   metadataBase: new URL("https://thomasbrandonhays.com"),

@@ -26,10 +26,10 @@ export default function KvRow({ label, value, emphasis, surface = "dark" }: KvRo
     const s = surfaces[surface];
 
     return (
-        <div className={`flex items-center gap-3 border-b py-2 ${s.rule}`}>
-            <span className={`text-code ${s.label}`}>{label}:</span>
-            <span aria-hidden="true" className={`h-px flex-1 border-b border-dotted ${s.leader}`} />
-            <span className={`text-code ${emphasis ? "text-ok" : s.value}`}>{value}</span>
+        <div className={`flex flex-col gap-1 border-b py-2 sm:flex-row sm:items-center sm:gap-3 ${s.rule}`}>
+            <span className={`text-code shrink-0 whitespace-nowrap ${s.label}`}>{label}:</span>
+            <span aria-hidden="true" className={`hidden h-px flex-1 border-b border-dotted sm:block ${s.leader}`} />
+            <span className={`text-code min-w-0 [overflow-wrap:anywhere] sm:text-right ${emphasis ? "text-ok" : s.value}`}>{value}</span>
         </div>
     );
 }

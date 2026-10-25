@@ -1,5 +1,6 @@
 // components/WordMark.tsx
 import { cn } from "@/lib/cn";
+import Link from "next/link";
 
 type WordMarkProps = {
     onClick?: () => void;
@@ -9,8 +10,8 @@ type WordMarkProps = {
 
 export default function WordMark({ onClick, showTitle = true, className }: WordMarkProps) {
     return (
-        <a
-            href="#hero"
+        <Link
+            href="/"
             onClick={onClick}
             className={cn(
                 "flex min-w-0 items-center gap-6 rounded-md",
@@ -38,6 +39,6 @@ export default function WordMark({ onClick, showTitle = true, className }: WordM
                     </>
                 )}
             </span>
-        </a>
+        </Link>
     );
 }

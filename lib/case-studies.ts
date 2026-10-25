@@ -1,6 +1,5 @@
 export type CaseStudy = {
   slug: string;
-  index: string;
   discipline: string;
   title: string;
   /** Card-level blurb. One or two sentences. */
@@ -29,7 +28,6 @@ export type CaseStudy = {
 export const caseStudies: CaseStudy[] = [
   {
     slug: "modular-email-component-system",
-    index: "01-DS",
     discipline: "SFMC & EMAIL",
     title: "Modular Email Component System",
     summary:
@@ -106,7 +104,6 @@ export const caseStudies: CaseStudy[] = [
   },
   {
     slug: "lifecycle-personalization-system",
-    index: "02-DS",
     discipline: "SFMC & CLOUDPAGES",
     title: "Lifecycle & Personalization System",
     summary:
@@ -183,7 +180,6 @@ export const caseStudies: CaseStudy[] = [
   },
   {
     slug: "headless-commerce-platform",
-    index: "03-FE",
     discipline: "FRONT-END & COMMERCE",
     title: "Headless Commerce Platform",
     summary:
@@ -272,6 +268,10 @@ export const caseStudies: CaseStudy[] = [
     ],
   },
 ];
+
+export function getCaseStudy(slug: string) {
+  return caseStudies.find((s) => s.slug === slug);
+}
 
 /*
 ANONYMIZATION NOTE

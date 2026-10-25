@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import Link from "next/link";
 type Variant = "primary" | "wire" | "primaryInvert";
 type ButtonProps = {
+  download?: boolean;
   href?: string;
   icon?: ReactNode;
   iconPosition?: "start" | "end";
@@ -21,7 +23,7 @@ const variants = {
   primaryInvert: "bg-text-invert text-surface-invert hover:bg-text-invert-dim",
 } satisfies Record<Variant, string>;
 
-export default function Button({ href, icon, iconPosition = "end", children, brackets, variant = "primary", onClick, type = "button", className }: ButtonProps) {
+export default function Button({ download, href, icon, iconPosition = "end", children, brackets, variant = "primary", onClick, type = "button", className }: ButtonProps) {
   const classes = cn(base, variants[variant], className);
   const content = (
     <>
@@ -34,11 +36,10 @@ export default function Button({ href, icon, iconPosition = "end", children, bra
   );
 
   if (href) {
-    return (
-      <a href={href} onClick={onClick} className={classes}>
-        {content}
-      </a>
-    );
+    if (download) {
+      return <a href={href} download onClick={onClick} className={classes}>{content}</a>;
+    }
+    return <Link href={href} onClick={onClick} className={classes}>{content}</Link>;
   }
 
   return (

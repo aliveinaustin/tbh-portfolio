@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Menu, X, FileDown } from "lucide-react";
+import Link from "next/link";
 import { navItems } from "@/lib/navItems";
 import Button from "@/components/ui/Button";
 import CopyPill from "@/components/ui/CopyPill";
@@ -59,12 +60,12 @@ export default function MobileNav() {
                     <ul className="flex flex-col gap-3">
                         {navItems.map((item) => (
                             <li key={item.href}>
-                                <a href={item.href} onClick={close} className="flex items-center justify-between gap-6 rounded-md border border-border px-4 py-4">
+                                <Link href={item.href} onClick={close} className="flex items-center justify-between gap-6 rounded-md border border-border px-4 py-4">
                                     <span className="flex items-baseline gap-4">
                                         <span className="text-label text-text">{item.label}</span>
                                     </span>
                                     <span aria-hidden="true">&rarr;</span>
-                                </a>
+                                </Link>
                             </li>
                         ))}
                     </ul>
@@ -75,8 +76,8 @@ export default function MobileNav() {
 
                 {/* Bottom group, pushed down by mt-auto */}
                 <div className="mt-auto flex flex-col gap-3 border-t border-border px-margin py-6">
-                    <Button href="#contact" onClick={close} className="w-full" brackets icon="→">Initiate Project</Button>
-                    <Button href="/resume.pdf" onClick={close} className="w-full" icon={<FileDown size={14} />} iconPosition="start" variant="wire" brackets>Download Resume</Button>
+                    <Button href="#contact" onClick={close} className="w-full" icon="→">Initiate Project</Button>
+                    <Button href="/resume.pdf" download onClick={close} className="w-full" icon={<FileDown size={14} />} iconPosition="start" variant="wire">Download Resume</Button>
                 </div>
             </dialog>
         </>
