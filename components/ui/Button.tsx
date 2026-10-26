@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
-import Link from "next/link";
+import NavLink from "@/components/ui/NavLink";
+
 type Variant = "primary" | "wire" | "primaryInvert";
 type ButtonProps = {
   download?: boolean;
@@ -39,7 +40,7 @@ export default function Button({ download, href, icon, iconPosition = "end", chi
     if (download) {
       return <a href={href} download onClick={onClick} className={classes}>{content}</a>;
     }
-    return <Link href={href} onClick={onClick} className={classes}>{content}</Link>;
+    return <NavLink href={href} onClick={onClick} className={classes}>{content}</NavLink>;
   }
 
   return (

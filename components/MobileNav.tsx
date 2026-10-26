@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Menu, X, FileDown } from "lucide-react";
-import Link from "next/link";
+import NavLink from "@/components/ui/NavLink";
 import { navItems } from "@/lib/navItems";
 import Button from "@/components/ui/Button";
 import CopyPill from "@/components/ui/CopyPill";
@@ -60,12 +60,12 @@ export default function MobileNav() {
                     <ul className="flex flex-col gap-3">
                         {navItems.map((item) => (
                             <li key={item.href}>
-                                <Link href={item.href} onClick={close} className="flex items-center justify-between gap-6 rounded-md border border-border px-4 py-4">
+                                <NavLink href={item.href} onClick={close} className="flex items-center justify-between gap-6 rounded-md border border-border px-4 py-4">
                                     <span className="flex items-baseline gap-4">
                                         <span className="text-label text-text">{item.label}</span>
                                     </span>
                                     <span aria-hidden="true">&rarr;</span>
-                                </Link>
+                                </NavLink>
                             </li>
                         ))}
                     </ul>

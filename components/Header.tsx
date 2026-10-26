@@ -1,4 +1,4 @@
-import Link from "next/link";
+import NavLink from "@/components/ui/NavLink";
 import Button from "@/components/ui/Button"
 import MobileNav from "@/components/MobileNav"
 import { navItems } from "@/lib/navItems";
@@ -15,9 +15,9 @@ export default function Header() {
                             <ul className="flex flex-row text-label gap-8">
                                 {navItems.map((item) => (
                                     <li key={item.href}>
-                                        <Link href={item.href} className="whitespace-nowrap text-text hover:text-text-muted rounded-sm">
+                                        <NavLink href={item.href} className="whitespace-nowrap text-text hover:text-text-muted rounded-sm">
                                             {item.label}
-                                        </Link>
+                                        </NavLink>
                                     </li>
                                 ))}
                             </ul>

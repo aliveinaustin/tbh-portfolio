@@ -18,6 +18,9 @@ import ConsolePanel from "@/components/ui/ConsolePanel";
 import EditorialCard from "@/components/ui/EditorialCard";
 import MetricCluster from "@/components/ui/MetricCluster";
 import FormField from "@/components/ui/FormField";
+import { notFound } from "next/navigation";
+
+
 function Specimen({ name, children }: { name: string; children: ReactNode }) {
     return (
         <div className="flex flex-col gap-3 border-t border-border-dim pt-4">
@@ -27,7 +30,7 @@ function Specimen({ name, children }: { name: string; children: ReactNode }) {
     );
 }
 export default function LabPage() {
-
+    if (process.env.NODE_ENV === "production") notFound();
     return (
         <>
 

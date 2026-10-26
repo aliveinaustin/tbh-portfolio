@@ -1,4 +1,4 @@
-import Link from "next/link";
+import NavLink from "@/components/ui/NavLink";
 import BackToTop from "@/components/ui/BackToTop";
 import BarcodeStrip from "@/components/ui/BarcodeStrip";
 import { navItems } from "@/lib/navItems";
@@ -23,18 +23,14 @@ export default function Footer() {
                         <ul className="flex flex-wrap gap-x-8 gap-y-4 text-label">
                             {navItems.map((item) => (
                                 <li key={item.href}>
-                                    <Link href={item.href} className={`${linkClasses} inline-flex shrink-0 items-center gap-2text-text hover:text-text-muted`}>
+                                    <NavLink href={item.href} className={`${linkClasses} inline-flex shrink-0 items-center gap-2text-text hover:text-text-muted`}>
                                         {item.label}
-                                    </Link>
+                                    </NavLink>
                                 </li>
                             ))}
                         </ul>
                     </nav>
                     <BackToTop />
-                    {/* <Link href="#top" className={`${linkClasses} inline-flex shrink-0 items-baseline gap-2 text-label text-ok hover:text-text-muted`}>
-                        <ArrowUp size={12} aria-hidden="true" className="self-center" />
-                        Top
-                    </Link> */}
                 </div>
             </div>
         </footer >
