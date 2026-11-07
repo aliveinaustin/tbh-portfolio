@@ -1,6 +1,7 @@
 // components/WordMark.tsx
 import { cn } from "@/lib/cn";
 import NavLink from "@/components/ui/NavLink";
+import TbhMark from "@/components/ui/TbhMark";
 
 type WordMarkProps = {
     onClick?: () => void;
@@ -18,9 +19,8 @@ export default function WordMark({ onClick, showTitle = true, className }: WordM
                 className
             )}
         >
-            <span aria-hidden="true" className="rounded-md border border-border p-2">
-                TBH
-            </span>
+
+            <TbhMark className="h-4 w-auto shrink-0 text-brand sm:h-5" />
 
             <span className="flex flex-col gap-2">
                 {/* text-lg: deliberate editorial exception, same as the DossierCard name */}

@@ -3,6 +3,9 @@
 
 
 :root {
+  /* brand mark — the one warm color, used only for the logo */
+  --brand: #fc3d21;
+  /* … */
   /* surfaces */
   --bg: #060a10;
   --surface: #0b111c;
@@ -74,7 +77,7 @@
 }
 
 @theme inline {
-
+  --color-brand: var(--brand);
 
   --color-bg: var(--bg);
   --color-surface: var(--surface);
@@ -192,6 +195,16 @@
   letter-spacing: 0.08em;
 }
 
+@utility bleed-right {
+  --gutter: max(calc((100vw - var(--container-page)) / 2), 0px);
+  width: 100vw;
+  padding-left: calc(var(--gutter) + var(--spacing-margin));
+}
+
+@utility w-content {
+  width: calc(min(100vw, var(--container-page)) - 2 * var(--spacing-margin));
+}
+
 @utility text-metric {
   font-family: var(--font-mono);
   font-size: clamp(1.875rem, 1.5rem + 1.5vw, 2.25rem);
@@ -279,4 +292,45 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Hides the Hero content from the very first paint — not just once
+   HeroIntro's effect runs — so a full page reload never flashes the
+   complete Hero before GSAP catches up. Reduced-motion users get no rule
+   here at all, matching the GSAP side's own matchMedia gate: visible
+   immediately, no animation, no flash either way. */
+@media (prefers-reduced-motion: no-preference) {
+  .hero-intro-content {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* Same problem, the other side: the overlay has no inline top/height until
+   HeroIntro's effect measures and sets them, so on first paint the badge
+   would briefly render at its unconstrained natural size before JS corrects
+   it. Hidden unconditionally (both motion preferences) — GSAP explicitly
+   reveals it for motion-enabled users once sizing is already correct, and
+   leaves it hidden for reduced-motion users, who should never see it. */
+.hero-intro-overlay {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* Recolors the badge to one flat brand red once it's demoted to a background
+   watermark. A plain CSS fill/stroke declaration beats the SVG's own
+   fill="#.." / stroke="#.." presentation attributes without needing
+   !important (that's how presentation attributes are specced to lose to
+   author CSS). Ring outlines (fill="none") are left alone so they stay
+   outlines instead of turning into solid discs. The transition only exists
+   while this class is present, but the browser still animates from the old
+   computed color to the new one the moment it's added. */
+.hero-badge-watermark svg [fill]:not([fill="none"]) {
+  fill: var(--brand);
+  transition: fill 0.5s ease;
+}
+
+.hero-badge-watermark svg [stroke] {
+  stroke: var(--brand);
+  transition: stroke 0.5s ease;
 }

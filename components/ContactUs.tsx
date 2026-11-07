@@ -5,7 +5,7 @@ import { FileDown } from "lucide-react";
 import ContactForm from "@/components/ContactForm";
 export default function Contact() {
     return (
-        <section id="contact" className="pb-section">
+        <section id="contact" className="pt-section pb-section">
             <div className="mx-auto w-full max-w-page px-margin">
                 <div className="grid gap-10 lg:grid-cols-[1fr_28rem] lg:gap-0 lg:overflow-hidden lg:rounded-2xl lg:border lg:border-border lg:bg-surface">
                     {/* Left: invitation + direct contact */}

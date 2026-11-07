@@ -4,7 +4,7 @@ import { skillGroups } from "@/lib/skills";
 
 export default function Skills() {
     return (
-        <Section id="skills" title="Skills">
+        <Section id="skills" title="Skills" muteWatermark muteWatermarkFadeTop>
             <dl className="border-t border-border">
                 {skillGroups.map((group) => (
                     <div

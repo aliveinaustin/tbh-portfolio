@@ -5,7 +5,7 @@ import KvRow from "@/components/ui/KvRow";
 
 export default function About() {
     return (
-        <Section id="about" eyebrow="Background" title="About">
+        <Section id="about" eyebrow="Background" title="About" muteWatermark muteWatermarkFadeTop muteWatermarkFadeBottom>
             <div className="grid gap-12 lg:grid-cols-[1fr_22rem] lg:gap-16">
                 <div className="flex max-w-prose flex-col gap-5 text-body text-text-muted">
                     <p>I&rsquo;m a front-end developer at GSD&M in Austin, where I&rsquo;ve spent eleven years building the parts of campaigns that have to work everywhere: HTML email and Salesforce Marketing Cloud programs, animated HTML5 display, and the sites they point to.</p>
