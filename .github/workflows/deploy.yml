@@ -22,7 +22,7 @@ jobs:
       - name: Assemble standalone bundle
         run: |
           cp -r .next/static .next/standalone/.next/static
-          if [ -d public ]; then cp -r public .next/standalone/public; fi
+          if [ -d public ]; then rsync -a public/ .next/standalone/public/; fi
 
       - name: Set up SSH
         run: |
