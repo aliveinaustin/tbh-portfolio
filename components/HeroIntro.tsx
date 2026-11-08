@@ -35,6 +35,26 @@ export default function HeroIntro({ badge, children }: HeroIntroProps) {
     if (!overlay || !badgeEl || !content) return;
 
     const alreadyPlayed = sessionStorage.getItem(INTRO_PLAYED_KEY) === "1";
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // The intro is a top-of-page branding moment, but a reload (or a fresh
+    // tab landing mid-scroll — e.g. clearing sessionStorage to retest while
+    // scrolled down near Contact) can leave the browser at any scroll
+    // position. Every measurement below is viewport-relative, so playing the
+    // intro without resetting scroll first both sizes the badge off
+    // nonsensical numbers and renders it "floating" over whatever section
+    // happens to be in view instead of over Hero. Skipped for reduced-motion
+    // and repeat-session mounts — neither actually plays the animation, so
+    // there's nothing visually broken to fix and no reason to yank the
+    // user's scroll position.
+    if (!alreadyPlayed && !prefersReducedMotion) {
+      // `behavior: "instant"` is required, not optional: html has
+      // `scroll-behavior: smooth` for motion-safe users — exactly the
+      // population this branch runs for — so a plain scrollTo(0, 0) would
+      // animate the scroll instead of jumping immediately, and every
+      // measurement below would still read the pre-scroll position.
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    }
 
     // Size and position both come from the one span that actually matters:
     // from where the Hero content begins (already reliably clear of the
@@ -103,7 +123,6 @@ export default function HeroIntro({ badge, children }: HeroIntroProps) {
     // the watermark act like a pinned backdrop — page content scrolls over
     // it — rather than a decoration that scrolls away with Hero itself.
     if (alreadyPlayed) {
-      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       if (prefersReducedMotion) {
         gsap.set(overlay, { autoAlpha: 0 });
       } else {
@@ -155,7 +174,9 @@ export default function HeroIntro({ badge, children }: HeroIntroProps) {
         // instrument face rather than swinging independently.
         const centerAssembly = q("#inner-ring-assembly, #center-text");
 
-        const tl = gsap.timeline();
+        const tl = gsap.timeline({
+          onComplete: () => window.removeEventListener("scroll", onScroll),
+        });
 
         tl.set(content, { autoAlpha: 0, y: DISTANCE.rise })
           .set(rings, { opacity: 0, scale: 0.7, rotate: -15, svgOrigin: badgeCenter })
@@ -248,7 +269,61 @@ export default function HeroIntro({ badge, children }: HeroIntroProps) {
           )
           .to(content, { autoAlpha: 1, y: 0, duration: DURATION.base, ease: EASE.enter }, "<+=0.2");
 
+        // A user who starts scrolling before the intro finishes shouldn't be
+        // stuck watching a `position: fixed` badge ride along on top of
+        // their content — scroll-locking until the animation completes was
+        // considered and rejected (blocking a basic gesture like scroll
+        // reads as the page being broken). Interrupting straight to the
+        // resolved watermark state instead respects the scroll immediately
+        // while still landing in the one state that's actually designed to
+        // coexist with scrolling.
+        let skippedByScroll = false;
+        const skipToWatermark = () => {
+          if (skippedByScroll) return;
+          skippedByScroll = true;
+          window.removeEventListener("scroll", onScroll);
+          tl.kill();
+          clearTimeout(markPlayedTimer);
+          sessionStorage.setItem(INTRO_PLAYED_KEY, "1");
+          // tl.kill() freezes every sub-element wherever its own tween
+          // happened to be mid-flight — whatever hadn't started revealing
+          // yet (aperture blades, labels, center assembly) is still sitting
+          // at the hidden opacity:0/scale:0.7-0.85 the timeline set at t=0.
+          // Snap everything to its fully-revealed state before the watermark
+          // transform takes over, or an early interrupt leaves the badge
+          // missing whatever hadn't animated in yet.
+          gsap.set([...rings, ...apertureBlades, ...arcSegments, ...labels, ...centerAssembly], {
+            opacity: 1,
+            scale: 1,
+            rotate: 0,
+          });
+          // zIndex/clip-path/class snap instantly — this early in the
+          // timeline there's no previous clip-path value to animate from,
+          // and neither benefits from easing anyway. The visible payoff
+          // (scale/rotate/fade) still gets a short tween so interrupting
+          // reads as "wrapping up" rather than a hard cut.
+          gsap.set(overlay, { zIndex: -1, clipPath: watermarkClipPath });
+          overlay.classList.add("hero-badge-watermark");
+          gsap.to(badgeEl, {
+            scale: 2.4,
+            rotate: -20,
+            x: -badgeSize * 0.35,
+            opacity: 0.14,
+            duration: 0.2,
+            ease: "power1.out",
+          });
+          gsap.to(content, { autoAlpha: 1, y: 0, duration: 0.2, ease: "power1.out" });
+        };
+        // A small threshold, not scrollY > 0 — trackpad/mouse-wheel
+        // overscroll bounce can fire scroll events at the very top of the
+        // page without the user having asked to scroll at all.
+        const onScroll = () => {
+          if (window.scrollY > 10) skipToWatermark();
+        };
+        window.addEventListener("scroll", onScroll, { passive: true });
+
         return () => {
+          window.removeEventListener("scroll", onScroll);
           clearTimeout(markPlayedTimer);
           tl.kill();
         };
