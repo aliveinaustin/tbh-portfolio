@@ -41,8 +41,13 @@ export default function CaseStudyCard({ study, visual, headingLevel: Heading = "
                 </span>
             </div>
 
-            {/* Visual panel */}
-            <div aria-hidden="true" className="relative aspect-video bg-surface lg:aspect-auto lg:min-h-96">
+            {/* Visual panel — not aria-hidden: a visual (e.g. ScreenDeck) can
+                contain a real focusable control, and a focusable element
+                inside aria-hidden is an accessibility error. z-10 keeps it
+                stacked above the title's stretched link (after:absolute
+                after:inset-0 over the whole card) so controls in here stay
+                clickable instead of triggering card navigation. */}
+            <div className="relative z-10 aspect-video bg-surface lg:aspect-auto lg:min-h-96">
                 {visual}
             </div>
         </article>

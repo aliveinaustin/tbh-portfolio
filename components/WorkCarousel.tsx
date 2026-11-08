@@ -1,7 +1,7 @@
 // components/WorkCarousel.tsx
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -10,9 +10,11 @@ import type { CaseStudy } from "@/lib/case-studies";
 
 type WorkCarouselProps = {
   studies: CaseStudy[];
+  /** Keyed by study slug — studies without an entry keep an empty visual panel. */
+  visuals?: Record<string, ReactNode>;
 };
 
-export default function WorkCarousel({ studies }: WorkCarouselProps) {
+export default function WorkCarousel({ studies, visuals }: WorkCarouselProps) {
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: "start",
     containScroll: "keepSnaps",
@@ -68,7 +70,7 @@ export default function WorkCarousel({ studies }: WorkCarouselProps) {
                     }
                   }}
                 >
-                  <CaseStudyCard study={study} />
+                  <CaseStudyCard study={study} visual={visuals?.[study.slug]} />
                 </div>
               );
             })}
