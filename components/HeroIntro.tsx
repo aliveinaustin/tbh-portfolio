@@ -16,6 +16,17 @@ type HeroIntroProps = {
 // resets on an actual new visit, so it plays once per session, not once ever.
 const INTRO_PLAYED_KEY = "tbh-hero-intro-played";
 
+// Ambient idle spin while the page sits still, and how far a full scroll
+// through the page winds the badge the rest of the way — both counter-
+// clockwise; the aperture blades counter-rotate at the same rate in the
+// opposite direction. "Extremely slow" for idle, tunable from there.
+const WATERMARK_IDLE_SPIN_SECONDS = 180;
+const WATERMARK_SCROLL_ROTATION_DEG = 360;
+// Scrubbed (not instantly tied to scroll position) so starting or stopping
+// a scroll eases the rotation rate in and out instead of snapping straight
+// to match it — this lag *is* the "gentle ease on each end" of the motion.
+const WATERMARK_SCROLL_SCRUB_LAG = 1.2;
+
 /**
  * Plays the badge intro once per session — rings establish, the aperture
  * spirals open, accent arcs flicker alive, service labels snap in, and the
@@ -117,6 +128,64 @@ export default function HeroIntro({ badge, children }: HeroIntroProps) {
       return `inset(${topClipInset}px -100vw -100vh -100vw)`;
     }
 
+    // Self-contained (queries `overlay` itself rather than reusing any of
+    // the intro timeline's element references below) so it can be called
+    // from any of the three places the badge resolves into its watermark
+    // state — the alreadyPlayed skip branch, the end of the full intro
+    // timeline, and a scroll-interrupt — without needing those to share scope.
+    function startWatermarkRotation() {
+      const q = gsap.utils.selector(overlay);
+      const badgeCenter = "663.198 663.252";
+      const ccwGroup = [
+        ...q("#outer-ring-assembly"),
+        ...q("#middle-ring-assembly"),
+        ...q("#outer-ring-text"),
+        ...q("#outer-arc-segments"),
+      ];
+      const cwGroup = q("#aperture-segments");
+      gsap.set([...ccwGroup, ...cwGroup], { svgOrigin: badgeCenter });
+
+      // One shared value accumulates from two independent sources — a
+      // never-stopping idle tween and a scroll-scrubbed tween — rather than
+      // having both drive `rotate` directly, which would just have the
+      // later one overwrite the earlier one instead of combining.
+      const rotationState = { idle: 0, scroll: 0 };
+
+      // Relative ("-=360"), not absolute — each repeat keeps subtracting
+      // from wherever it already is, so the accumulated value climbs
+      // indefinitely instead of resetting to 0 and visibly snapping back.
+      const idleTween = gsap.to(rotationState, {
+        idle: "-=360",
+        duration: WATERMARK_IDLE_SPIN_SECONDS,
+        repeat: -1,
+        ease: "none",
+      });
+
+      const scrollTween = gsap.to(rotationState, {
+        scroll: -WATERMARK_SCROLL_ROTATION_DEG,
+        ease: "none",
+        scrollTrigger: {
+          trigger: document.body,
+          start: "top top",
+          end: "bottom bottom",
+          scrub: WATERMARK_SCROLL_SCRUB_LAG,
+        },
+      });
+
+      const applyRotation = () => {
+        const rotation = rotationState.idle + rotationState.scroll;
+        gsap.set(ccwGroup, { rotate: rotation });
+        gsap.set(cwGroup, { rotate: -rotation });
+      };
+      gsap.ticker.add(applyRotation);
+
+      return () => {
+        gsap.ticker.remove(applyRotation);
+        idleTween.kill();
+        scrollTween.kill();
+      };
+    }
+
     // The header sits below a non-sticky info bar at scroll 0, but as soon
     // as the user scrolls past that bar the header locks to the top of the
     // viewport and its bottom edge jumps up with it. A clip-path computed
@@ -142,20 +211,24 @@ export default function HeroIntro({ badge, children }: HeroIntroProps) {
     // the watermark act like a pinned backdrop — page content scrolls over
     // it — rather than a decoration that scrolls away with Hero itself.
     if (alreadyPlayed) {
+      let stopRotation: (() => void) | null = null;
       if (prefersReducedMotion) {
         gsap.set(overlay, { autoAlpha: 0 });
       } else {
         gsap.set(overlay, { visibility: "visible", opacity: 1, zIndex: -1, clipPath: computeWatermarkClipPath() });
         gsap.set(badgeEl, { scale: 2.4, rotate: -20, x: -badgeSize * 0.35, opacity: 0.14 });
         overlay.classList.add("hero-badge-watermark");
+        stopRotation = startWatermarkRotation();
       }
       gsap.set(content, { autoAlpha: 1 });
-      // Not a bare `return;` — this path sets up syncClipPath above same as
-      // the full-intro path below, so it needs the matching cleanup too, or
-      // every remount here (e.g. navigating between case study pages) leaks
-      // another scroll listener that never gets removed.
+      // Not a bare `return;` — this path sets up syncClipPath (and, for
+      // motion-safe visits, the rotation loop) above same as the full-intro
+      // path below, so it needs matching cleanup too, or every remount here
+      // (e.g. navigating between case study pages) leaks another listener
+      // and another running rotation.
       return () => {
         if (syncClipPath) window.removeEventListener("scroll", syncClipPath);
+        if (stopRotation) stopRotation();
       };
     }
 
@@ -171,6 +244,10 @@ export default function HeroIntro({ badge, children }: HeroIntroProps) {
         // lets the cleanup below cancel it if this invocation is the one
         // that gets torn down.
         const markPlayedTimer = setTimeout(() => sessionStorage.setItem(INTRO_PLAYED_KEY, "1"), 0);
+        // Set by whichever of the two watermark hand-offs below actually
+        // fires — the timeline reaching its own end, or a scroll interrupt
+        // cutting it short — and read by this callback's own cleanup.
+        let stopRotation: (() => void) | null = null;
         const q = gsap.utils.selector(overlay);
         // The badge's circles are all centered on the viewBox's exact midpoint —
         // svgOrigin pins rotation/scale there regardless of each group's own
@@ -283,6 +360,7 @@ export default function HeroIntro({ badge, children }: HeroIntroProps) {
           .call(() => {
             overlay.classList.add("hero-badge-watermark");
             overlay.style.clipPath = computeWatermarkClipPath();
+            stopRotation = startWatermarkRotation();
           }, [], "<")
           // The badge doesn't vanish — it blows up into a big, rotated, flat-red
           // watermark parked behind the real content, instead of disappearing.
@@ -335,6 +413,7 @@ export default function HeroIntro({ badge, children }: HeroIntroProps) {
           // reads as "wrapping up" rather than a hard cut.
           gsap.set(overlay, { zIndex: -1, clipPath: computeWatermarkClipPath() });
           overlay.classList.add("hero-badge-watermark");
+          stopRotation = startWatermarkRotation();
           gsap.to(badgeEl, {
             scale: 2.4,
             rotate: -20,
@@ -357,6 +436,7 @@ export default function HeroIntro({ badge, children }: HeroIntroProps) {
           window.removeEventListener("scroll", onScroll);
           clearTimeout(markPlayedTimer);
           tl.kill();
+          if (stopRotation) stopRotation();
         };
       });
 

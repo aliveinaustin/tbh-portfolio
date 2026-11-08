@@ -21,7 +21,21 @@ export default function NavLink({ href, onClick, ...props }: NavLinkProps) {
 
         e.preventDefault();
         if (hash) {
-            document.getElementById(hash)?.scrollIntoView();
+            const target = document.getElementById(hash);
+            target?.scrollIntoView();
+            // Native hash navigation both scrolls to the target *and* moves
+            // focus there; preventDefault above replaces that with a custom
+            // scroll but drops the focus half. Without this, keyboard focus
+            // stays on the link itself — now scrolled off-screen — so the
+            // next Tab continues from the link's actual DOM position (e.g.
+            // back up into Work) instead of from the section the page just
+            // scrolled to. tabindex="-1" makes an otherwise-unfocusable
+            // section a valid *programmatic* focus target without adding it
+            // to the normal Tab sequence, matching native behavior.
+            if (target && !target.hasAttribute("tabindex")) {
+                target.setAttribute("tabindex", "-1");
+            }
+            target?.focus({ preventScroll: true });
         } else {
             window.scrollTo({ top: 0 });
         }
