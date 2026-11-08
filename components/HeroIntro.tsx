@@ -110,10 +110,29 @@ export default function HeroIntro({ badge, children }: HeroIntroProps) {
     // own edge. Reaching UP to the header's edge requires a negative inset,
     // which clip-path's spec explicitly allows (it expands the clipped
     // region beyond the reference box rather than shrinking it).
-    const headerBottomPx = document.querySelector("header")?.getBoundingClientRect().bottom ?? 0;
-    const clipLineY = headerBottomPx + 12;
-    const topClipInset = clipLineY - top;
-    const watermarkClipPath = `inset(${topClipInset}px -100vw -100vh -100vw)`;
+    function computeWatermarkClipPath() {
+      const headerBottomPx = document.querySelector("header")?.getBoundingClientRect().bottom ?? 0;
+      const clipLineY = headerBottomPx + 12;
+      const topClipInset = clipLineY - top;
+      return `inset(${topClipInset}px -100vw -100vh -100vw)`;
+    }
+
+    // The header sits below a non-sticky info bar at scroll 0, but as soon
+    // as the user scrolls past that bar the header locks to the top of the
+    // viewport and its bottom edge jumps up with it. A clip-path computed
+    // once at mount doesn't know that happened — it leaves a growing gap
+    // between the header's new (higher) bottom edge and the watermark's
+    // still-clipped-at-the-old-position top edge. Keeping this synced via a
+    // scroll listener for the component's whole lifetime (rather than just
+    // the brief transition past the info bar) also covers scrolling back up
+    // and re-revealing it, or the info bar's own height changing responsively.
+    let syncClipPath: (() => void) | null = null;
+    if (!prefersReducedMotion) {
+      syncClipPath = () => {
+        overlay.style.clipPath = computeWatermarkClipPath();
+      };
+      window.addEventListener("scroll", syncClipPath, { passive: true });
+    }
 
     // Repeat mounts within the session (e.g. navigating back from a case
     // study) skip the intro, but the badge should still land in its
@@ -126,12 +145,18 @@ export default function HeroIntro({ badge, children }: HeroIntroProps) {
       if (prefersReducedMotion) {
         gsap.set(overlay, { autoAlpha: 0 });
       } else {
-        gsap.set(overlay, { visibility: "visible", opacity: 1, zIndex: -1, clipPath: watermarkClipPath });
+        gsap.set(overlay, { visibility: "visible", opacity: 1, zIndex: -1, clipPath: computeWatermarkClipPath() });
         gsap.set(badgeEl, { scale: 2.4, rotate: -20, x: -badgeSize * 0.35, opacity: 0.14 });
         overlay.classList.add("hero-badge-watermark");
       }
       gsap.set(content, { autoAlpha: 1 });
-      return;
+      // Not a bare `return;` — this path sets up syncClipPath above same as
+      // the full-intro path below, so it needs the matching cleanup too, or
+      // every remount here (e.g. navigating between case study pages) leaks
+      // another scroll listener that never gets removed.
+      return () => {
+        if (syncClipPath) window.removeEventListener("scroll", syncClipPath);
+      };
     }
 
     const ctx = gsap.context(() => {
@@ -246,13 +271,19 @@ export default function HeroIntro({ badge, children }: HeroIntroProps) {
           // `badgeEl` does. Keeping overlay untransformed is what lets its
           // clip-path stay a straight line at the header's edge instead of
           // rotating/scaling along with the badge inside it.
-          .set(overlay, { zIndex: -1, clipPath: watermarkClipPath }, "+=1.2")
+          .set(overlay, { zIndex: -1 }, "+=1.2")
           // classList directly, not GSAP's className special property — this
           // build of GSAP ships with that feature commented out of CSSPlugin,
           // so passing className as a plain property overwrote the whole
           // class list (including hero-intro-overlay itself) with the raw
-          // string instead of toggling one class on top of the rest.
-          .call(() => overlay.classList.add("hero-badge-watermark"), [], "<")
+          // string instead of toggling one class on top of the rest. The
+          // clip-path is likewise computed here (playback time), not baked
+          // into the .set() above (creation time) — same live-header reason
+          // as syncClipPath further down.
+          .call(() => {
+            overlay.classList.add("hero-badge-watermark");
+            overlay.style.clipPath = computeWatermarkClipPath();
+          }, [], "<")
           // The badge doesn't vanish — it blows up into a big, rotated, flat-red
           // watermark parked behind the real content, instead of disappearing.
           .to(
@@ -302,7 +333,7 @@ export default function HeroIntro({ badge, children }: HeroIntroProps) {
           // and neither benefits from easing anyway. The visible payoff
           // (scale/rotate/fade) still gets a short tween so interrupting
           // reads as "wrapping up" rather than a hard cut.
-          gsap.set(overlay, { zIndex: -1, clipPath: watermarkClipPath });
+          gsap.set(overlay, { zIndex: -1, clipPath: computeWatermarkClipPath() });
           overlay.classList.add("hero-badge-watermark");
           gsap.to(badgeEl, {
             scale: 2.4,
@@ -335,7 +366,10 @@ export default function HeroIntro({ badge, children }: HeroIntroProps) {
       });
     });
 
-    return () => ctx.revert();
+    return () => {
+      if (syncClipPath) window.removeEventListener("scroll", syncClipPath);
+      ctx.revert();
+    };
   }, []);
 
   return (
