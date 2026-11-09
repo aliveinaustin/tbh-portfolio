@@ -48,7 +48,7 @@ File sizes shown in the UI are computed at build time from the actual assets rat
 
 ## Deployment
 
-Pushes to `main` trigger a GitHub Actions run that installs dependencies, builds, assembles the standalone bundle with `.next/static` and `public`, rsyncs it to the droplet over SSH, and restarts the systemd service. nginx proxies to the Node process on loopback; only 22, 80, and 443 are exposed.
+Pushes to `main` trigger a GitHub Actions run that installs dependencies, builds, assembles the standalone bundle with `.next/static` and `public`, rsyncs it to the droplet over SSH, and restarts the systemd service. nginx proxies to the Node process on loopback; only 22, 80, and 443 are exposed. Video and image files under `public/work/` are served directly by nginx rather than proxied — see `deploy/nginx/portfolio.conf`, a tracked copy of the droplet's nginx config (that file isn't part of the deploy pipeline, so this is the only record of it outside the server itself).
 
 ## License
 
