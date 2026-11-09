@@ -19,11 +19,27 @@ export type CaseStudy = {
   problem: string;
   approach: string;
   result: string;
+  /** Same copy as `result`, pre-split into paragraphs — only GearZN's detail
+   * page renders these (its Result panel has room for them); `result`
+   * itself stays the single string other studies and metadata use. */
+  resultParagraphs?: string[];
   constraints: string[];
-  decisions: { decision: string; reason: string }[];
+  decisions: { decision: string; reason: string; visual?: string }[];
   learned: string[];
   metrics?: { value: string; unit?: string; caption: string }[];
 };
+
+// Written once, used two ways: GearZN's own `result` below is
+// `gearznResultParagraphs.join(" ")`, not a separate copy — a hand-kept
+// duplicate is exactly the kind of thing that silently drifts when one
+// copy gets edited and the other doesn't.
+const gearznResultParagraphs = [
+  "The store ran in production with continuous deployment, per-environment secrets, consent-compliant analytics, first-party attribution and a hardened checkout.",
+  "The most important findings were bugs that gave no sign they existed. A checkout endpoint was deleting its own orders on six different failure paths. Returning customers were told their cart was empty. A pixel counted every purchase three times. Visitors who typed the address without “www” never saw the Apple Pay button, while every other wallet kept working, so it looked like an Apple Pay problem rather than a domain one. None of them produced an error, a log line or anything a customer would notice.",
+  "Performance work paid off too: the icon font went from 3.87 MB to 447 KB, hero images from 1.87 MB to 110 KB, and Lighthouse desktop performance from 73 into the nineties.",
+  "In the end, the numbers said to stop. With a fixed cost per click, a $13 product cost as much to sell as a $50 one, and the demand data made that clear before it became a sunk-cost argument.",
+  "Before shutting it down, I wrote a recorder instead of capturing it by hand: a Playwright script that logs into staging, walks the full purchase path at four screen sizes, places test orders through Stripe's test mode, and saves every page and every interactive state. It also records loop-ready demo videos, with a scripted cursor that finishes on the exact pixel it started from. Every screen and clip on this page came from it. The store is retired. The engineering record, and this footage, is what remains.",
+];
 
 export const caseStudies: CaseStudy[] = [
   {
@@ -184,7 +200,7 @@ export const caseStudies: CaseStudy[] = [
     title: "Headless Commerce Platform",
     summary:
       "I built and ran GearZN, a headless car-accessories store, by myself. React in front, WooCommerce behind, real customers paying real money. Along the way I documented ninety ways that stack can fail, most of them without a single error message.", role: "Sole engineer — architecture, implementation, infrastructure, measurement",
-    platform: "React / WooCommerce / DigitalOcean",
+    platform: "React / WordPress + WooCommerce / DigitalOcean",
     status: "Project concluded; store retired. Engineering record preserved.",
     stack: [
       "React",
@@ -192,6 +208,7 @@ export const caseStudies: CaseStudy[] = [
       "TypeScript",
       "Zustand",
       "Tailwind CSS",
+      "WordPress",
       "WooCommerce REST API",
       "Stripe",
       "Docker Compose",
@@ -206,8 +223,8 @@ export const caseStudies: CaseStudy[] = [
       "GearZN was a direct-to-consumer car-accessories store on a headless architecture: a React app served on its own, talking to WooCommerce only through its REST API. I was the only engineer, the store took real payments, and I ran it around a full-time job. Building it turned out to be the easy part. The hard part was that nobody else was looking. With no second reviewer, the bugs that matter most are the ones that never throw an error. They just keep quietly doing the wrong thing.",
     approach:
       "I worked by two rules. The first was to trust the running system over the documentation. Carrier routing, consent state and build output all behaved differently than the docs or settings screens said, so I checked each one directly: testing the routing, reading live network traffic, inspecting the compiled bundle. The second rule was to write everything down. Every non-obvious bug got a numbered entry: what broke, why, the fix, and how I proved the fix worked. By the time the log reached 207 KB, loading it into every working session had become a cost of its own, so I rebuilt it as a 15 KB index pointing to eight topic files loaded only when needed. That cut the baseline by 95% without losing anything, because the index, not the split, was what made it searchable.",
-    result:
-      "The store ran in production with continuous deployment, per-environment secrets, consent-compliant analytics, first-party attribution and a hardened checkout. The most important findings were bugs that gave no sign they existed. A checkout endpoint was deleting its own orders on six different failure paths. Returning customers were told their cart was empty. A pixel counted every purchase three times. Analytics counted bot traffic as real visitors. None of them produced an error, a log line or anything a customer would notice. Performance work paid off too: the icon font went from 3.87 MB to 447 KB, hero images from 1.87 MB to 110 KB, and Lighthouse desktop performance from 73 into the nineties. In the end, the numbers said to stop. With a fixed cost per click, a $13 product cost as much to sell as a $50 one, and the demand data made that clear before it became a sunk-cost argument. Before shutting it down, I wrote a recorder instead of capturing it by hand: a Playwright script that logs into staging, walks the full purchase path at four screen sizes, places test orders through Stripe's test mode, and saves every page and every interactive state. It also records loop-ready demo videos, with a scripted cursor that finishes on the exact pixel it started from. Every screen and clip on this page came from it. The store is retired. The engineering record, and this footage, is what remains.",
+    result: gearznResultParagraphs.join(" "),
+    resultParagraphs: gearznResultParagraphs,
     constraints: [
       "One engineer, a live store and real payments, with no second reviewer.",
       "The analytics were wrong in both directions: checkout events fired on every page change, while consent choices and ad blockers hid others entirely.",
@@ -219,31 +236,37 @@ export const caseStudies: CaseStudy[] = [
     decisions: [
       {
         decision: "Move failed orders to the trash instead of deleting them",
-        reason: "It keeps the evidence. \"Failed\" was the obvious status to use, but it sends the customer an email.",
+        reason: "A failed payment used to delete the order, and every clue about what went wrong with it. Moving it to the trash keeps the record without emailing the customer, which WooCommerce's \"failed\" status would have done.",
+        visual: "failure-trace",
       },
       {
         decision: "Log every failure path",
-        reason: "Before this, a server problem and a declined card looked identical: both produced nothing at all.",
+        reason: "A server error and a declined card both ended the same way: in silence. Logging each path separately means every failure says what it was.",
+        visual: "failure-trace",
       },
       {
         decision: "Calculate cart totals from the items instead of storing them",
-        reason: "That removes the whole category of totals drifting from reality, rather than patching one case. It's memoized, because eight components read it, including every product card.",
+        reason: "A stored total can drift out of sync with the cart. A total calculated from the items can't, which closed a whole category of bugs instead of one. It's memoized, so the eight components that read it stay fast.",
+        visual: "cart-totals",
       },
       {
         decision: "Clear the cart only after 3-D Secure finishes",
-        reason: "A failed card authentication was emptying the cart and deleting the abandoned-cart record as if the order had gone through.",
+        reason: "The cart was being cleared before card authentication finished, so a failed check left the customer with an empty cart and no abandoned-cart email. Now nothing is cleared until the payment is confirmed.",
+        visual: "3ds-clear",
       },
       {
         decision: "Write attribution onto the order itself",
-        reason: "Data stored on the server survives consent changes, tracking prevention, ad blockers and broken pixels.",
+        reason: "Ad platforms lose track of sales when visitors block cookies or trackers. Saving where each customer came from on the order, on my own server, keeps that answer whatever the browser allows.",
+        visual: "attribution",
       },
       {
-        decision: "Treat the order database as the only real count",
-        reason: "Every platform report is an approximation of it.",
+        decision: "Route every WordPress file to WordPress explicitly",
+        reason: "In a headless setup, any URL nginx didn't send to WordPress fell through to React, which answers everything with its own page and a success code. That's how search engines asking for robots.txt and the sitemaps silently got the storefront instead.",
       },
       {
         decision: "Script the walkthrough instead of recording it by hand",
-        reason: "Every screen size gets the identical path, a skipped step is logged instead of quietly missing, and the whole capture can be rerun after any change.",
+        reason: "A script follows the same path at every screen size, logs any step it couldn't finish, and can redo the whole video or static image capture after a change. Doing it by hand guarantees none of that.",
+        visual: "recorder-grid",
       },
     ],
     learned: [
