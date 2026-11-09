@@ -183,8 +183,7 @@ export const caseStudies: CaseStudy[] = [
     discipline: "FRONT-END & COMMERCE",
     title: "Headless Commerce Platform",
     summary:
-      "A React storefront decoupled from WooCommerce, taking real payments on a hardened checkout path — and a documented record of ninety ways that stack fails, most of them silently.",
-    role: "Sole engineer — architecture, implementation, infrastructure, measurement",
+      "I built and ran GearZN, a headless car-accessories store, by myself. React in front, WooCommerce behind, real customers paying real money. Along the way I documented ninety ways that stack can fail, most of them without a single error message.", role: "Sole engineer — architecture, implementation, infrastructure, measurement",
     platform: "React / WooCommerce / DigitalOcean",
     status: "Project concluded; store retired. Engineering record preserved.",
     stack: [
@@ -204,61 +203,54 @@ export const caseStudies: CaseStudy[] = [
       "Consent Mode v2",
     ],
     problem:
-      "Build and operate a direct-to-consumer storefront on a headless architecture — a React SPA served independently of its WooCommerce backend, connected only through the REST API — as a solo engineer, on a production system taking real payments, alongside a full-time job. The hard part was not the build. It was that a single-operator production system has no second reviewer, so defects that produce no error message can run indefinitely.",
+      "GearZN was a direct-to-consumer car-accessories store on a headless architecture: a React app served on its own, talking to WooCommerce only through its REST API. I was the only engineer, the store took real payments, and I ran it around a full-time job. Building it turned out to be the easy part. The hard part was that nobody else was looking. With no second reviewer, the bugs that matter most are the ones that never throw an error. They just keep quietly doing the wrong thing.",
     approach:
-      "Two working principles. First, verify against the running system rather than the documentation: carrier routing confirmed empirically after vendor docs proved unreliable, consent state read from live network traffic rather than configuration screens, build output inspected directly after a Vite transform produced something the source did not imply. Second, keep a written record — ninety numbered entries covering each non-obvious defect, its root cause, the fix, and the verification that proved it. When that record reached 207 KB and became a per-session cost, it was restructured into a 15 KB index plus eight topic-scoped files loaded on demand: a 95% reduction in baseline context with no loss of discoverability, because the index rather than the split was treated as the load-bearing component.",
+      "I worked by two rules. The first was to trust the running system over the documentation. Carrier routing, consent state and build output all behaved differently than the docs or settings screens said, so I checked each one directly: testing the routing, reading live network traffic, inspecting the compiled bundle. The second rule was to write everything down. Every non-obvious bug got a numbered entry: what broke, why, the fix, and how I proved the fix worked. By the time the log reached 207 KB, loading it into every working session had become a cost of its own, so I rebuilt it as a 15 KB index pointing to eight topic files loaded only when needed. That cut the baseline by 95% without losing anything, because the index, not the split, was what made it searchable.",
     result:
-      "A production headless commerce platform with continuous deployment, environment-scoped secrets, consent-compliant measurement, first-party attribution and a hardened payment path. Several production defects were found that produced no error, no log, and no user-visible symptom: a checkout endpoint hard-deleting its own orders across six failure branches, a cart reporting itself empty to returning customers, a pixel counting every purchase three times, and an analytics property counting bot traffic as sessions. Payload work took the icon font from 3.87 MB to 447 KB and hero images from 1.87 MB to 110 KB, moving Lighthouse desktop performance from 73 into the nineties.",
+      "The store ran in production with continuous deployment, per-environment secrets, consent-compliant analytics, first-party attribution and a hardened checkout. The most important findings were bugs that gave no sign they existed. A checkout endpoint was deleting its own orders on six different failure paths. Returning customers were told their cart was empty. A pixel counted every purchase three times. Analytics counted bot traffic as real visitors. None of them produced an error, a log line or anything a customer would notice. Performance work paid off too: the icon font went from 3.87 MB to 447 KB, hero images from 1.87 MB to 110 KB, and Lighthouse desktop performance from 73 into the nineties. In the end, the numbers said to stop. With a fixed cost per click, a $13 product cost as much to sell as a $50 one, and the demand data made that clear before it became a sunk-cost argument. Before shutting it down, I wrote a recorder instead of capturing it by hand: a Playwright script that logs into staging, walks the full purchase path at four screen sizes, places test orders through Stripe's test mode, and saves every page and every interactive state. It also records loop-ready demo videos, with a scripted cursor that finishes on the exact pixel it started from. Every screen and clip on this page came from it. The store is retired. The engineering record, and this footage, is what remains.",
     constraints: [
-      "Solo build on a live system processing real payments — no second reviewer",
-      "Platform-reported analytics proved untrustworthy in both directions: begin_checkout fired on every route navigation and was suppressed entirely by consent denial and ad blockers",
-      "Consent Mode modelling meant a portion of reported conversions were estimates rather than observations",
-      "WooCommerce's failed order status triggers a customer-facing email on this configuration, ruling it out for forensic order preservation",
-      "nginx was serving the full storefront to any Host header, so scanner traffic on the raw IP counted as sessions",
-      "Fixed cost-per-click means a $13 product costs the same to acquire as a $50 one",
+      "One engineer, a live store and real payments, with no second reviewer.",
+      "The analytics were wrong in both directions: checkout events fired on every page change, while consent choices and ad blockers hid others entirely.",
+      "Some reported conversions were Consent Mode estimates, not actual observations.",
+      "WooCommerce's \"failed\" order status emails the customer here, so it couldn't be used to keep failed orders for investigation.",
+      "nginx served the full store to any hostname, so scanners hitting the raw IP showed up as visitors.",
+      "With a fixed cost per click, a $13 product cost as much to sell as a $50 one.",
     ],
     decisions: [
       {
-        decision: "Trash rather than hard delete on checkout failure",
-        reason:
-          "Preserves the order row for forensics; chosen over `failed` status because that triggers a customer email.",
+        decision: "Move failed orders to the trash instead of deleting them",
+        reason: "It keeps the evidence. \"Failed\" was the obvious status to use, but it sends the customer an email.",
       },
       {
-        decision: "Structured logging on every failure branch",
-        reason: "Distinguishes infrastructure failures from payment failures; previously both produced nothing.",
+        decision: "Log every failure path",
+        reason: "Before this, a server problem and a declined card looked identical: both produced nothing at all.",
       },
       {
-        decision: "Derive cart count and subtotal from the item array",
-        reason: "Eliminates the class of defect rather than the instance — stored values were excluded from persistence.",
+        decision: "Calculate cart totals from the items instead of storing them",
+        reason: "That removes the whole category of totals drifting from reality, rather than patching one case. It's memoized, because eight components read it, including every product card.",
       },
       {
-        decision: "Memoise the derivation on array reference",
-        reason: "Eight consumers including a per-grid-item product card were recomputing on every cart mutation.",
+        decision: "Clear the cart only after 3-D Secure finishes",
+        reason: "A failed card authentication was emptying the cart and deleting the abandoned-cart record as if the order had gone through.",
       },
       {
-        decision: "Defer cart-clear until after 3-D Secure resolves",
-        reason:
-          "Failed authentication was emptying the cart and deleting the abandonment record as though the order had completed.",
+        decision: "Write attribution onto the order itself",
+        reason: "Data stored on the server survives consent changes, tracking prevention, ad blockers and broken pixels.",
       },
       {
-        decision: "First-party attribution written to order metadata",
-        reason: "Server-side and immune to consent changes, tracking prevention, ad blockers and pixel defects.",
-      },
-      {
-        decision: "Treat the order database as the only trustworthy count",
+        decision: "Treat the order database as the only real count",
         reason: "Every platform report is an approximation of it.",
       },
       {
-        decision: "Correct the failure record in place rather than superseding entries",
-        reason: "Two entries teaching that a tool is unreliable would have blocked correct changes later.",
+        decision: "Script the walkthrough instead of recording it by hand",
+        reason: "Every screen size gets the identical path, a skipped step is logged instead of quietly missing, and the whole capture can be rerun after any change.",
       },
     ],
     learned: [
-      "The defects that cost the most are the ones that produce no error. In every significant finding, the system reported success while doing the wrong thing.",
-      "Verification has to run against the running system, not the documentation — several findings were only reachable that way.",
-      "A passing test that checks only the success path will ship the defect; the 3-D Secure failure was proven by instrumenting for the absence of an event.",
-      "Fixing the class of defect beats fixing the instance: deriving cart totals removed a whole category of persistence bug.",
-      "Wind down on evidence rather than exhaustion — market demand data and per-product return-on-spend analysis made the structural cost-per-click problem legible before it became a sunk-cost argument.",
+      "The expensive bugs are the silent ones. In every major finding, the system reported success while doing the wrong thing.",
+      "Test what's running, not what the docs promise, and test for what should be missing. The 3-D Secure bug only showed up once I checked for an event that never fired.",
+      "Fix the category, not the instance. Calculating cart totals instead of storing them removed a whole family of bugs at once.",
+      "Stop on evidence, not exhaustion. The cost-per-click math showed when to wind down before it became a matter of stubbornness.",
     ],
     metrics: [
       { value: "447", unit: "KB", caption: "Icon font, from 3.87 MB" },
