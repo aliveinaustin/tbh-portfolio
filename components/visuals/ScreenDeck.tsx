@@ -1,7 +1,7 @@
 // components/visuals/ScreenDeck.tsx
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import Image from "next/image";
 import { Pause, Play } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -18,16 +18,71 @@ const SLOTS = [
   { x: 70, y: -20, rotation: 9, scale: 0.88, opacity: 0.6 },
 ];
 const HIDDEN = { x: 90, y: -26, rotation: 12, scale: 0.84, opacity: 0 };
-const slot = (depth: number) => SLOTS[depth] ?? HIDDEN;
 
-type ScreenDeckProps = { screens: DeckScreen[]; interval?: number };
+// These x/y offsets were tuned for "card," where the wrapper sits in a wide
+// clipped panel (the home page's CaseStudyCard) with plenty of room either
+// side. "hero"'s wrapper is deliberately narrow — just the phone's own
+// footprint, not a panel — so the same absolute pixel fan runs the back
+// cards past its right edge. Scaling the fan down for hero (rather than
+// widening its clip boundary to match) keeps it from bleeding past the
+// page edge on mobile, where there's little margin to spare.
+const FAN_SCALE = { card: 1, hero: 0.4 } as const;
+const slot = (depth: number, fanScale: number) => {
+  const base = SLOTS[depth] ?? HIDDEN;
+  return { ...base, x: base.x * fanScale, y: base.y * fanScale };
+};
+
+// "hero" is only bigger — same slots, same behavior, same aria treatment —
+// so the detail-page pane and the home-page carousel card share one
+// implementation instead of forking into near-duplicate components.
+const SIZE = {
+  card: { stack: "h-64 sm:h-72", imgSizes: "180px" },
+  hero: { stack: "h-48 sm:h-72 lg:h-96", imgSizes: "(min-width: 1024px) 208px, 160px" },
+} as const;
+
+// "hero" renders no labels of its own at all — HeroDeck draws a single
+// label row across the bottom of the backdrop instead, so this never had
+// room to begin with (narrow phone silhouette, not a panel) and would
+// otherwise double up with HeroDeck's row.
+const LABELS = {
+  card: {
+    row: "hidden items-center gap-2 sm:flex",
+    column: "absolute left-4 top-1/2 z-10 flex -translate-y-1/2 flex-col items-start gap-1 sm:hidden",
+  },
+  hero: {
+    row: "hidden",
+    column: "hidden",
+  },
+} as const;
+
+type ScreenDeckProps = {
+  screens: DeckScreen[];
+  interval?: number;
+  size?: keyof typeof SIZE;
+  /** Fires with the front card's index on mount and on every advance — lets
+   * a parent (e.g. a desktop-backdrop pane) stay in step without owning any
+   * of the deck's own timing. */
+  onActiveChange?: (index: number) => void;
+  /** Fires whenever the user toggles pause — lets a parent rendering its own
+   * button (via `hideControls` + a ref) show the right icon. */
+  onPausedChange?: (paused: boolean) => void;
+  /** Suppresses the deck's own pause button — for a parent that renders its
+   * own (in a spot the deck can't reach, e.g. alongside its own labels) and
+   * drives this one by ref instead. */
+  hideControls?: boolean;
+};
+
+export type ScreenDeckHandle = { toggle: () => void };
 
 /**
  * A deck of phone screenshots that fans out, with the front card flipping
  * out and tucking in at the back every `interval` seconds. Loops only while
  * motion-safe and in view; a visitor's pause persists through both.
  */
-export default function ScreenDeck({ screens, interval = 2.8 }: ScreenDeckProps) {
+const ScreenDeck = forwardRef<ScreenDeckHandle, ScreenDeckProps>(function ScreenDeck(
+  { screens, interval = 2.8, size = "card", onActiveChange, onPausedChange, hideControls },
+  ref
+) {
   const scopeRef = useRef<HTMLDivElement>(null);
   const order = useRef(screens.map((_, i) => i));
   const loop = useRef<gsap.core.Tween | null>(null);
@@ -44,6 +99,14 @@ export default function ScreenDeck({ screens, interval = 2.8 }: ScreenDeckProps)
     else loop.current.pause();
   };
 
+  // A ref, not a dependency: an inline arrow prop from the parent would
+  // otherwise re-fire the whole effect (tearing down and rebuilding the
+  // GSAP context) on every parent render instead of just updating in place.
+  const onActiveChangeRef = useRef(onActiveChange);
+  onActiveChangeRef.current = onActiveChange;
+  const onPausedChangeRef = useRef(onPausedChange);
+  onPausedChangeRef.current = onPausedChange;
+
   useEffect(() => {
     const scope = scopeRef.current;
     if (!scope) return;
@@ -51,10 +114,12 @@ export default function ScreenDeck({ screens, interval = 2.8 }: ScreenDeckProps)
     const ctx = gsap.context(() => {
       const cards = gsap.utils.toArray<HTMLElement>("[data-card]", scope);
       const depthZ = (depth: number) => screens.length - depth;
+      const fanScale = FAN_SCALE[size];
 
       order.current.forEach((card, depth) =>
-        gsap.set(cards[card], { ...slot(depth), zIndex: depthZ(depth) })
+        gsap.set(cards[card], { ...slot(depth, fanScale), zIndex: depthZ(depth) })
       );
+      onActiveChangeRef.current?.(order.current[0]);
 
       // Gated on prefers-reduced-motion here, not by skipping the effect
       // entirely — the fanned-stack positions above still apply either way,
@@ -75,11 +140,11 @@ export default function ScreenDeck({ screens, interval = 2.8 }: ScreenDeckProps)
               duration: 0.55,
               ease: EASE.exit,
             })
-            .set(cards[front], { ...slot(screens.length - 1), rotationY: 0, zIndex: 0 });
+            .set(cards[front], { ...slot(screens.length - 1, fanScale), rotationY: 0, zIndex: 0 });
 
           rest.forEach((card, depth) =>
             gsap.to(cards[card], {
-              ...slot(depth),
+              ...slot(depth, fanScale),
               zIndex: depthZ(depth),
               duration: 0.6,
               delay: 0.15,
@@ -88,6 +153,7 @@ export default function ScreenDeck({ screens, interval = 2.8 }: ScreenDeckProps)
           );
 
           setActive(rest[0]);
+          onActiveChangeRef.current?.(rest[0]);
           // gsap.delayedCall, not setInterval — pausing the returned tween
           // (via sync()) actually stops the loop instead of just skipping
           // one callback while a timer keeps running underneath.
@@ -121,24 +187,27 @@ export default function ScreenDeck({ screens, interval = 2.8 }: ScreenDeckProps)
   const toggle = () => {
     userPaused.current = !userPaused.current;
     setPaused(userPaused.current);
+    onPausedChangeRef.current?.(userPaused.current);
     sync();
   };
 
+  useImperativeHandle(ref, () => ({ toggle }));
+
   return (
     <div ref={scopeRef} className="relative flex h-full flex-col items-center justify-center gap-8 p-8">
-      <div aria-hidden="true" className="relative aspect-[390/844] h-64 [perspective:1200px] sm:h-72">
+      <div aria-hidden="true" className={cn("relative aspect-390/844 perspective-distant", SIZE[size].stack)}>
         {screens.map((s) => (
           <div
             key={s.src}
             data-card
             className="absolute inset-0 overflow-hidden rounded-2xl border border-border bg-bg shadow-2xl will-change-transform"
           >
-            <Image src={s.src} alt="" fill sizes="180px" className="object-cover object-top" />
+            <Image src={s.src} alt="" fill sizes={SIZE[size].imgSizes} className="object-cover object-top" />
           </div>
         ))}
       </div>
 
-      <ol aria-hidden="true" className="hidden items-center gap-2 sm:flex">
+      <ol aria-hidden="true" className={LABELS[size].row}>
         {screens.map((s, i) => (
           <li key={s.label} className="flex items-center gap-2">
             {i > 0 && <span className="w-4 border-t border-dotted border-text-faint" />}
@@ -154,7 +223,7 @@ export default function ScreenDeck({ screens, interval = 2.8 }: ScreenDeckProps)
           at phone widths), but there's ~130px of open space beside it —
           more than enough for the labels themselves (longest, "Confirmed",
           measures ~86px) stacked vertically instead. */}
-      <ol aria-hidden="true" className="absolute left-4 top-1/2 z-10 flex -translate-y-1/2 flex-col items-start gap-1 sm:hidden">
+      <ol aria-hidden="true" className={LABELS[size].column}>
         {screens.map((s, i) => (
           // items-start, not items-center: centering was relative to each
           // li's own shrink-to-fit width, which is that word's width — so
@@ -180,14 +249,18 @@ export default function ScreenDeck({ screens, interval = 2.8 }: ScreenDeckProps)
         ))}
       </ol>
 
-      <button
-        type="button"
-        onClick={toggle}
-        aria-label={paused ? "Play animation" : "Pause animation"}
-        className="absolute right-3 bottom-3 z-10 inline-flex size-9 items-center justify-center rounded-full border border-border bg-bg/80 text-text-muted hover:text-text"
-      >
-        {paused ? <Play size={14} aria-hidden="true" /> : <Pause size={14} aria-hidden="true" />}
-      </button>
+      {!hideControls && (
+        <button
+          type="button"
+          onClick={toggle}
+          aria-label={paused ? "Play animation" : "Pause animation"}
+          className="absolute right-3 bottom-3 z-10 inline-flex size-9 items-center justify-center rounded-full border border-border bg-bg/80 text-text-muted hover:text-text"
+        >
+          {paused ? <Play size={14} aria-hidden="true" /> : <Pause size={14} aria-hidden="true" />}
+        </button>
+      )}
     </div>
   );
-}
+});
+
+export default ScreenDeck;
