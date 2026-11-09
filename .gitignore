@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# raw recorder source footage — too large to commit, and the store it
+# records has been taken down so it can't be re-recorded. Only the
+# processed outputs in public/work/gearzn/video/ are tracked.
+public/work/gearzn/gearzn-desktop-1440.mp4
