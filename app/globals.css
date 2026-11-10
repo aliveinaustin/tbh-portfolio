@@ -229,6 +229,12 @@
   }
 
   html {
+    /* Reserved permanently, not just while a dialog is open — otherwise
+       removing the real scrollbar below widens the viewport by its own
+       width, shifting all the content over for as long as a dialog is
+       open. */
+    scrollbar-gutter: stable;
+
     @variant motion-safe {
       scroll-behavior: smooth;
     }
