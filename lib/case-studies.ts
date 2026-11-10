@@ -49,7 +49,7 @@ export const caseStudies: CaseStudy[] = [
     summary:
       "A reusable Salesforce Marketing Cloud architecture that lets campaigns across multiple sub-brands be assembled from tested components instead of built as one-off HTML emails.",
     client: "Enterprise client, multi-sub-brand program",
-    role: "Front-End / Email Developer",
+    role: "Sole developer: architecture, modules, Litmus and technical QA",
     platform: "Salesforce Marketing Cloud",
     status: "Client work — rendered artifacts available on request.",
     gatedArtifacts: true,
@@ -63,13 +63,12 @@ export const caseStudies: CaseStudy[] = [
       "WCAG",
     ],
     problem:
-      "Email campaigns across several sub-brands shared the same structural and technical requirements but were built individually. Heroes, body content, CTA groups, banners, footers, responsive spacing and dark-mode handling had to be recreated and retested every campaign. The system needed to support multiple distinct visual identities, stay usable by non-developer SFMC users, and preserve campaign-specific URLs, UTMs and tracking aliases.",
+      "Email campaigns across several sub-brands shared the same structural and technical requirements but were built individually. Heroes, body content, CTA groups, banners, footers, responsive spacing and dark-mode handling had to be recreated and retested for every campaign. The system needed to support multiple distinct visual identities and preserve campaign-specific URLs, UTMs and tracking aliases. I designed, built and maintained it as the only developer on the program.",
     approach:
       "I audited existing builds to find where layout structure, campaign copy, brand styling, URLs and client-specific fixes had become entangled in the same markup. That produced a layered Template → Row Pattern → Module → Configuration architecture, where each layer owns one responsibility. AMPscript theme tokens supply sub-brand colors and assets; a Data Extension-backed CTA library resolves image-button artwork by sub-brand and human-readable CTA key. Responsive behavior, Outlook compatibility and dark-mode handling were developed and tested at the component level so fixes are inherited rather than rediscovered.",
     result:
       "A modular production system that separates structure, presentation, reusable content and campaign configuration. Campaigns are assembled from standardized templates and tested modules while retaining per-brand presentation and unique tracking. QA moved upstream: responsive behavior, Outlook compatibility, dark mode, image sizing and accessibility are solved when components are built, not when campaigns ship.",
     constraints: [
-      "Content Builder had to stay practical for users not maintaining the underlying HTML",
       "AMPscript variables share scope across a render, requiring deliberate naming and ownership",
       "Outlook's Word renderer required table layouts, explicit dimensions and scoped line-height",
       "Dark mode behaves differently across Outlook, Apple/native and other clients",
@@ -79,43 +78,43 @@ export const caseStudies: CaseStudy[] = [
     ],
     decisions: [
       {
-        decision: "Template → Row Pattern → Module → Configuration",
-        reason: "Separates structural, reusable and campaign-specific concerns.",
+        decision: "Split every email into four layers: Template → Row Pattern → Module → Configuration",
+        reason: "Layout, copy, brand styling and campaign settings had been tangled together in the same markup, so changing one risked breaking another. With each layer owning one job, a campaign change only touches configuration.",
       },
       {
-        decision: "40px desktop / 20px mobile spacing model",
-        reason: "Predictable responsive behavior; modules stop inventing page-level spacing.",
+        decision: "Use one spacing model: 40px on desktop, 20px on mobile",
+        reason: "Modules had each been inventing their own page-level spacing, so layouts didn't line up predictably across screen sizes. One rule, owned by the template, makes any combination of modules fit together.",
       },
       {
-        decision: "Theme tokens driven by sub-brand",
-        reason: "One set of modules supports several visual systems instead of one implementation each.",
+        decision: "Drive brand styling from theme tokens",
+        reason: "Supporting several sub-brands would otherwise mean a separate copy of every module for each one. Tokens for colors and assets let one tested set of modules take on each brand's look.",
       },
       {
-        decision: "Developer-governed modules with CFG snippets",
-        reason: "Protects tested rendering behavior while exposing the values producers actually change.",
+        decision: "Keep module code locked, with campaign values in a configuration snippet",
+        reason: "Each campaign needed its own copy, images and links, but editing those inside a module's table code risked breaking rendering that had already been tested. A separate configuration block holds the campaign values, so building a campaign never means touching the module itself.",
       },
       {
-        decision: "CTA Image Library Data Extension, keyed by brand + CTA key",
-        reason: "Centralizes reusable artwork; equivalent actions resolve to the right brand asset.",
+        decision: "Keep button artwork in a shared library, looked up by brand and CTA name",
+        reason: "Image-based buttons were being recreated campaign by campaign. A Data Extension keyed by brand and a readable CTA name returns the right artwork for whichever brand is sending.",
       },
       {
-        decision: "Separate CTA asset selection from destination URL and tracking",
-        reason: "Artwork is reused while every campaign keeps unique URLs and UTMs.",
+        decision: "Choose the button image separately from its link and tracking",
+        reason: "The same artwork appears in many campaigns, but every campaign needs its own URL and UTM parameters. Keeping the two apart lets the image be reused while the tracking stays unique.",
       },
       {
-        decision: "Component-level Litmus QA",
-        reason: "Moves recurring client fixes upstream so campaigns inherit tested behavior.",
+        decision: "Test each module in Litmus, not each campaign",
+        reason: "The same Outlook, mobile and dark-mode fixes were being rediscovered with every send. Testing a module once means every campaign built from it starts out already tested.",
       },
       {
-        decision: "Explicit table geometry and cell backgrounds",
-        reason: "Outlook for Windows Dark transforms neighboring cells differently without them.",
+        decision: "Set explicit table sizes and cell backgrounds",
+        reason: "Left implicit, Outlook for Windows in dark mode recolors neighboring cells differently from each other. Declaring them explicitly keeps the dark-mode rendering consistent.",
       },
     ],
     learned: [
-      "Reusable email architecture works when ownership boundaries are explicit — containers own layout context, modules own rendering, configuration owns campaign values.",
-      "Design-system thinking applies to email, but browser-oriented abstractions matter less than predictable table structures and components validated against real client behavior.",
-      "Asset reuse and URL reuse are different problems and are easier to manage separately.",
-      "Solving an Outlook issue once is useful; changing the component so future campaigns inherit the fix is the system-level improvement.",
+      "Give every layer one job. Templates and rows own layout, modules own rendering and configuration owns campaign values, so a change in one never ripples into the others.",
+      "Email design systems are built on tables, not abstractions. What made the system reliable was predictable table structure tested against how real email clients render it, not browser-style componentization.",
+      "Reusing artwork and reusing links are different problems. Keeping CTA images in a shared library, and URLs and tracking per campaign, let each be reused without breaking the other.",
+      "Fix the component, not the campaign. Solving an Outlook issue once helps one send; changing the module means every future campaign inherits the fix.",
     ],
   },
   {
@@ -125,7 +124,7 @@ export const caseStudies: CaseStudy[] = [
     summary:
       "Modernized an SFMC lifecycle system spanning three subscriber pathways — preserving Salesforce identity, adding authenticated API sync, and driving personalized email from normalized preference data.",
     client: "Enterprise client, multi-pathway subscriber program",
-    role: "Front-End / Email Developer",
+    role: "Sole developer: architecture, modules, Litmus and technical QA",
     platform: "Salesforce Marketing Cloud",
     status: "Client work — rendered artifacts available on request.",
     gatedArtifacts: true,
@@ -142,11 +141,11 @@ export const caseStudies: CaseStudy[] = [
     problem:
       "What began as a set of email and CloudPage needs had grown into a lifecycle system spanning website acquisition, application audiences, legacy subscribers, double opt-in, preference collection, Salesforce synchronization and personalized follow-up. Subscribers arrived with different identity types — some with Salesforce IDs, some with only an email address — and three pathways tracked different lifecycle events. Downstream personalization needed one predictable record regardless of origin.",
     approach:
-      "I audited the data model, CloudPage behavior, email architecture and client-rendering constraints. Rather than flattening every workflow, I kept pathway-specific source Data Extensions for lifecycle state and normalized the shared preference fields into a Master Data Extension used for personalization. Identity moved to Id/Subscriber Key with email fallback, preserving existing Salesforce records. The Salesforce API integration was rolled out incrementally — validate input, minimal DE write, restore fields one at a time, add the outbound request, add OAuth, then add sanitized diagnostic logging — so failures could be isolated to a specific layer.",
+      "I audited the data model, CloudPage behavior, email architecture and client-rendering constraints. Rather than flattening every workflow, I kept pathway-specific source Data Extensions for lifecycle state and normalized the shared preference fields into a Master Data Extension used for personalization. Identity moved to “Subscriber Key (the Salesforce ID) with email fallback, preserving existing Salesforce records. The Salesforce API integration was rolled out incrementally — validate input, minimal DE write, restore fields one at a time, add the outbound request, add OAuth, then add sanitized diagnostic logging — so failures could be isolated to a specific layer.",
     result:
       "A maintainable system supporting three subscriber origins without sacrificing existing Salesforce identities. Acquisition-specific state stays separate from shared preference data, one normalized source feeds downstream journeys, and CloudPage and API failures are diagnosable. The reusable email layer removed the need to re-solve the same Outlook, mobile, dark-mode and tracking problems per campaign.",
     constraints: [
-      "Some subscribers had Salesforce IDs; others entered with only an email address",
+      "Some subscribers had Subscriber Keys (the Salesforce ID); others entered with only an email address",
       "Three pathways tracked different lifecycle events, so one acquisition table was not a valid source for every use case",
       "CloudPages and SSJS offered limited debugging visibility — schema problems surfaced as generic server errors",
       "OAuth credentials and endpoints had to stay out of browser-accessible code",
@@ -155,43 +154,43 @@ export const caseStudies: CaseStudy[] = [
     ],
     decisions: [
       {
-        decision: "Id/Subscriber Key as canonical primary key, email as fallback",
-        reason: "Preserves existing Salesforce identities without blocking email-only acquisition.",
+        decision: "Use the Subscriber Key (the Salesforce ID) as the primary key, with email as a fallback",
+        reason: "Some subscribers arrived with a Subscriber Key and others with only an email address. Keying on the ID preserves existing Salesforce records, and the email fallback means email-only sign-ups aren't turned away.",
       },
       {
-        decision: "Separate source DEs, normalized Master DE",
-        reason: "Keeps pathway-specific state isolated while giving personalization one consistent record.",
+        decision: "Keep a source table per pathway, plus one normalized master table",
+        reason: "The three pathways tracked different lifecycle events, so no single acquisition table could serve them all. Each keeps its own state, and only the shared preference fields go into the master record that personalization reads.",
       },
       {
-        decision: "Lookup-before-write date preservation",
-        reason: "Repeat interactions no longer destroy original lifecycle timestamps.",
+        decision: "Look up an existing record before writing",
+        reason: "Repeat interactions were overwriting the original lifecycle dates. Checking for an existing record first preserves those timestamps instead of resetting them.",
       },
       {
-        decision: "Tokenized double opt-in with expiration",
-        reason: "Explicit confirmation state; already-confirmed subscribers aren't returned to pending.",
+        decision: "Use expiring tokens for double opt-in",
+        reason: "Confirmation needed to be an explicit state, and a repeat visit shouldn't push an already-confirmed subscriber back to pending. Expiring tokens make confirmation a clear, time-limited step.",
       },
       {
-        decision: "Incremental API rollout",
-        reason: "Separates schema failures from OAuth and API failures in a runtime with poor diagnostics.",
+        decision: "Roll out the API integration one layer at a time",
+        reason: "CloudPages report almost every failure as the same generic server error. Adding validation, the data write, the API request, OAuth and logging in separate steps meant any new failure could only come from the layer just added.",
       },
       {
-        decision: "Dedicated configuration Data Extension",
-        reason: "Separates integration configuration from subscriber data.",
+        decision: "Store integration settings in their own configuration table",
+        reason: "Endpoints and settings don't belong alongside subscriber records. A dedicated Data Extension keeps them in one place, managed separately from the data they act on.",
       },
       {
-        decision: "Local-only credential helper",
-        reason: "Generated the config payload at runtime without publishing a sensitive utility.",
+        decision: "Generate the credential payload with a local-only helper",
+        reason: "The configuration needed sensitive values that had to stay out of anything a browser could reach. Running the helper locally produced the payload without ever publishing the tool itself.",
       },
       {
-        decision: "Module-scoped AMPscript variable naming",
-        reason: "Shared render scope meant generic names let later blocks overwrite earlier values.",
+        decision: "Prefix AMPscript variables by module",
+        reason: "AMPscript shares variables across the whole email, so two modules using the same generic name would silently overwrite each other. Module-specific names keep each block's values its own.",
       },
     ],
     learned: [
-      "In marketing platforms, integration failures are usually data-contract problems before they are application-code problems.",
-      "Identity strategy has to accommodate both existing CRM records and acquisition paths that start with incomplete identity.",
-      "Normalization is most useful when it separates pathway-specific state from the shared data downstream systems actually need.",
-      "In constrained runtimes, observability and phased rollout are part of the implementation, not optional debugging extras.",
+      "Integration bugs are usually data bugs. In marketing platforms, most failures trace back to mismatched schemas and field contracts, not to the code making the calls.",
+      "Plan identity for the records you don't have yet. The system had to keep existing Subscriber Keys intact while accepting subscribers who arrived with nothing but an email address.",
+      "Normalize what's shared, keep what's specific. Each pathway kept its own lifecycle state, and only the preference data that downstream journeys needed went into the master record.",
+      "In a black-box runtime, logging is part of the build. CloudPages give almost no debugging visibility, so rolling the API integration out one step at a time, with diagnostic logging, was the only way to tell which layer had failed.",
     ],
   },
   {
@@ -286,6 +285,11 @@ export const caseStudies: CaseStudy[] = [
 
 export function getCaseStudy(slug: string) {
   return caseStudies.find((s) => s.slug === slug);
+}
+
+export function getNextCaseStudy(slug: string) {
+  const i = caseStudies.findIndex((s) => s.slug === slug);
+  return caseStudies[(i + 1) % caseStudies.length];
 }
 
 /*
