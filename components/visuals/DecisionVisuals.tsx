@@ -39,13 +39,17 @@ export const decisionVisuals: Record<string, ReactNode> = {
   "cart-totals": (
     <BeforeAfterPair
       before="/work/gearzn/decisions/12-cart-drawer-3-items--mobile-390.png"
+      beforeAlt="Cart drawer with 3 items, before the fix"
       after="/work/gearzn/decisions/13-cart-drawer-qty-updated--mobile-390.png"
+      afterAlt="Cart drawer after a quantity change, total recalculated from the items"
     />
   ),
   "3ds-clear": (
     <BeforeAfterPair
       before="/work/gearzn/decisions/16-checkout-filled--mobile-390.png"
+      beforeAlt="Checkout page filled in, before 3-D Secure confirmation"
       after="/work/gearzn/decisions/17-order-confirmation--mobile-390.png"
+      afterAlt="Order confirmation page after payment is confirmed"
     />
   ),
   attribution: <AttributionCrop />,

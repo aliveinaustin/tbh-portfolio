@@ -1,5 +1,6 @@
 // components/visuals/RecorderGrid.tsx
 import Image from "next/image";
+import Zoomable from "@/components/visuals/Zoomable";
 import type { DeckScreen } from "@/lib/case-visuals";
 
 type RecorderGridProps = { screens: Pick<DeckScreen, "src" | "label">[] };
@@ -22,23 +23,30 @@ const TARGET_MAX_WIDTH = 240;
 const SCALE = TARGET_MAX_WIDTH / 1920;
 
 /** The same page at the recorder's four profile sizes, sized proportional
- * to their real logical dimensions — decorative, the decision text next to
- * it carries the meaning. */
+ * to their real logical dimensions. Each thumbnail is too small to read at
+ * a glance, so it opens a larger version on click/tap. */
 export default function RecorderGrid({ screens }: RecorderGridProps) {
   return (
-    <div aria-hidden="true" className="flex w-full flex-wrap items-end gap-3 sm:gap-4">
+    <div className="flex w-full flex-wrap items-end gap-3 sm:gap-4">
       {screens.map((s) => {
         const dims = PROFILE_DIMENSIONS[s.label];
         const width = dims ? Math.round(dims.width * SCALE) : 80;
         const height = dims ? Math.round(dims.height * SCALE) : 80;
         return (
           <figure key={s.src} className="flex flex-col items-center gap-2">
-            <div
-              className="relative shrink-0 overflow-hidden rounded-lg border border-border bg-bg"
-              style={{ width, height }}
+            <Zoomable
+              src={s.src}
+              alt={`Shop page at the ${s.label} screen-size profile`}
+              width={dims?.width ?? width}
+              height={dims?.height ?? height}
             >
-              <Image src={s.src} alt="" fill sizes={`${width}px`} className="object-cover object-top" />
-            </div>
+              <div
+                className="relative shrink-0 overflow-hidden rounded-lg border border-border bg-bg"
+                style={{ width, height }}
+              >
+                <Image src={s.src} alt="" fill sizes={`${width}px`} className="object-cover object-top" />
+              </div>
+            </Zoomable>
             <figcaption className="text-label text-text-faint">{s.label}</figcaption>
           </figure>
         );
