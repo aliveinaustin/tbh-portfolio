@@ -116,3 +116,79 @@ export const M_SYNC_Y = 95;
 export const M_SYNC_HEIGHT = 24;
 export const M_SYNC_MARGIN = 10;
 export const M_SYNC_LABEL_Y = 140;
+
+// --- Hero "Flow map" (ambient loop) -------------------------------------
+// Unlike the card, nothing here ever moves position — the whole system is
+// laid out once, fully labelled, and stays put. Only packets (traveling
+// along these fixed connectors) and color (the cycling red pathway
+// highlight) animate. Four static column headings — Pathways, Source
+// Tables, Master, Downstream — sit above each desktop column; mobile's
+// single flowing column doesn't need them (the row order alone reads as
+// the same four stages).
+
+export const H_D_WIDTH = 420;
+export const H_D_HEIGHT = 220;
+export const H_D_VIEWBOX = `0 0 ${H_D_WIDTH} ${H_D_HEIGHT}`;
+export const H_D_HEADING_Y = 10;
+
+export const H_D_SOURCE = { x: 10, size: 18 };
+export const H_D_SOURCE_LABEL_X = H_D_SOURCE.x + H_D_SOURCE.size + 8;
+export const H_D_ROW_Y: Record<PathwayId, number> = { website: 26, application: 86, legacy: 146 };
+export const H_D_CONNECTOR_ST_X1: Record<PathwayId, number> = { website: 73, application: 92, legacy: 68 };
+
+export const H_D_TABLE = { x: 100, width: 70, height: 36 };
+
+// Rows converge on the master's left edge with a small per-row vertical
+// offset (like the card's table→master connectors), not all at one point.
+export const H_D_MASTER = { x: 210, y: 78, width: 100, height: 64 };
+export const H_D_BADGE_Y = H_D_MASTER.y - 22;
+export const H_D_CAPTION_Y = H_D_BADGE_Y - 12;
+// Where the two downstream connectors fork from — master's own right-
+// center, not two separate points — so both legs visibly originate from
+// the same record.
+export const H_D_FORK_X = H_D_MASTER.x + H_D_MASTER.width + 2;
+export const H_D_FORK_Y = H_D_MASTER.y + H_D_MASTER.height / 2;
+
+export const H_D_SALESFORCE = { x: 340, y: 18, width: 48, height: 38 };
+export const H_D_EMAIL = { x: 330, y: 84, width: 70, height: 112 };
+
+export const H_D_HEADING_X: Record<"pathways" | "tables" | "master" | "downstream", number> = {
+  pathways: H_D_SOURCE.x,
+  tables: H_D_TABLE.x,
+  master: H_D_MASTER.x,
+  downstream: H_D_SALESFORCE.x,
+};
+
+// --- Hero mobile: the same map flowing top to bottom -------------------
+export const H_M_WIDTH = 360;
+export const H_M_HEIGHT = 500;
+export const H_M_VIEWBOX = `0 0 ${H_M_WIDTH} ${H_M_HEIGHT}`;
+
+export const H_M_COL_X: Record<PathwayId, number> = { website: 64, application: 180, legacy: 296 };
+export const H_M_SOURCE_ROW_Y = 10;
+export const H_M_SOURCE_SIZE = 22;
+export const H_M_SOURCE_X: Record<PathwayId, number> = Object.fromEntries(
+  (Object.keys(H_M_COL_X) as PathwayId[]).map((id) => [id, H_M_COL_X[id] - H_M_SOURCE_SIZE / 2])
+) as Record<PathwayId, number>;
+
+export const H_M_TABLE = { width: 96, height: 66 };
+export const H_M_TABLE_ROW_Y = 68;
+export const H_M_TABLE_X: Record<PathwayId, number> = Object.fromEntries(
+  (Object.keys(H_M_COL_X) as PathwayId[]).map((id) => [id, H_M_COL_X[id] - H_M_TABLE.width / 2])
+) as Record<PathwayId, number>;
+
+// All three table→master connectors converge on this single point — same
+// device the card's beat 3 uses — directly above the master table, with
+// the key icon + caption sitting right at it.
+export const H_M_BADGE_X = H_M_WIDTH / 2;
+export const H_M_BADGE_Y = 170;
+export const H_M_CAPTION_Y = H_M_BADGE_Y - 16;
+
+export const H_M_MASTER = { x: 20, y: H_M_BADGE_Y + 20, width: H_M_WIDTH - 40, height: 70 };
+// The downstream fork point — master's own bottom-center, matching
+// desktop's single shared origin for both legs.
+export const H_M_FORK_X = H_M_MASTER.x + H_M_MASTER.width / 2;
+export const H_M_FORK_Y = H_M_MASTER.y + H_M_MASTER.height + 2;
+
+export const H_M_SALESFORCE = { x: 20, y: H_M_MASTER.y + H_M_MASTER.height + 50, width: 150, height: 56 };
+export const H_M_EMAIL = { x: 190, y: H_M_MASTER.y + H_M_MASTER.height + 30, width: 150, height: 150 };

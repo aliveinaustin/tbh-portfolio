@@ -232,7 +232,15 @@ export function Chip({ x, y, width = 24, height = 11, label, className }: { x: n
 /** Three stacked server bars with a status dot each, labelled below. Each
  * dot carries `data-led={i}` so a timeline can drive the top-to-bottom
  * cascade blink independently of the bars themselves. */
-export function ServerStack({ x, y, width = 40, height = 34, label = "SALESFORCE", className }: { x: number; y: number; width?: number; height?: number; label?: string; className?: string }) {
+export function ServerStack({
+  x,
+  y,
+  width = 40,
+  height = 34,
+  label = "SALESFORCE",
+  labelSize = 6.5,
+  className,
+}: { x: number; y: number; width?: number; height?: number; label?: string; labelSize?: number; className?: string }) {
   const gap = 3;
   const barH = (height - gap * 2) / 3;
   return (
@@ -243,7 +251,7 @@ export function ServerStack({ x, y, width = 40, height = 34, label = "SALESFORCE
           <circle data-led={i} cx={x + 5} cy={y + i * (barH + gap) + barH / 2} r={1.3} fill="var(--color-text-faint)" />
         </g>
       ))}
-      <text x={x + width / 2} y={y + height + 10} textAnchor="middle" fontSize={6.5} fontFamily="var(--font-mono)" fontWeight={700} fill="var(--color-text)" letterSpacing={0.5}>
+      <text x={x + width / 2} y={y + height + 10} textAnchor="middle" fontSize={labelSize} fontFamily="var(--font-mono)" fontWeight={700} fill="var(--color-text)" letterSpacing={0.5}>
         {label}
       </text>
     </g>

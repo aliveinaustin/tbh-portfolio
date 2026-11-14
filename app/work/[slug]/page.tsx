@@ -8,6 +8,7 @@ import { decisionVisuals } from "@/components/visuals/DecisionVisuals";
 import HeroDeck from "@/components/visuals/HeroDeck";
 import ResultVideo from "@/components/visuals/ResultVideo";
 import EmailExplodedHero from "@/components/visuals/email/EmailExplodedHero";
+import LifecycleHero from "@/components/visuals/lifecycle/LifecycleHero";
 
 // Only the slugs from generateStaticParams exist; anything else is a 404
 export const dynamicParams = false;
@@ -18,6 +19,7 @@ export const dynamicParams = false;
 // placeholders/plain-text equivalents in those slots until they have art.
 const GEARZN_SLUG = "headless-commerce-platform";
 const MODULAR_EMAIL_SLUG = "modular-email-component-system";
+const LIFECYCLE_SLUG = "lifecycle-personalization-system";
 
 export function generateStaticParams() {
     return caseStudies.map((s) => ({ slug: s.slug }));
@@ -39,6 +41,7 @@ export default async function CaseStudyPage({ params }: PageProps<"/work/[slug]"
     if (!study) notFound();
     const isGearzn = slug === GEARZN_SLUG;
     const isModularEmail = slug === MODULAR_EMAIL_SLUG;
+    const isLifecycle = slug === LIFECYCLE_SLUG;
 
     return (
         <article className="mx-auto w-full max-w-page px-margin pt-8 pb-16">
@@ -46,7 +49,7 @@ export default async function CaseStudyPage({ params }: PageProps<"/work/[slug]"
                 ← All work
             </Link>
 
-            <Header study={study} isGearzn={isGearzn} isModularEmail={isModularEmail} />
+            <Header study={study} isGearzn={isGearzn} isModularEmail={isModularEmail} isLifecycle={isLifecycle} />
             <Body study={study} isGearzn={isGearzn} />
 
             <NextCaseStudy slug={slug} />
@@ -75,7 +78,7 @@ function NextCaseStudy({ slug }: { slug: string }) {
     );
 }
 
-function Header({ study, isGearzn, isModularEmail }: { study: CaseStudy; isGearzn: boolean; isModularEmail: boolean }) {
+function Header({ study, isGearzn, isModularEmail, isLifecycle }: { study: CaseStudy; isGearzn: boolean; isModularEmail: boolean; isLifecycle: boolean }) {
     return (
         <header className="mt-8 grid gap-10 border-b border-border pb-10 lg:grid-cols-2 lg:items-center lg:gap-16">
             <div className="flex flex-col gap-6">
@@ -95,6 +98,8 @@ function Header({ study, isGearzn, isModularEmail }: { study: CaseStudy; isGearz
                 <HeroDeck screens={gearznDeck} />
             ) : isModularEmail ? (
                 <EmailExplodedHero />
+            ) : isLifecycle ? (
+                <LifecycleHero />
             ) : (
                 <HeroPlaceholder />
             )}
