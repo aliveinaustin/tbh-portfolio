@@ -5,6 +5,11 @@
 :root {
   /* brand mark — the one warm color, used only for the logo */
   --brand: #fc3d21;
+  /* NASA-meatball blue, fixed (not theme-varying, like --brand) — the
+   * modular-email study's data/configuration color. --blue is fills only,
+   * too dark for lines on --bg; --blue-light is lines/outlines/details. */
+  --blue: #0b3d91;
+  --blue-light: #6e9bea;
   /* … */
   /* surfaces */
   --bg: #060a10;
@@ -78,6 +83,8 @@
 
 @theme inline {
   --color-brand: var(--brand);
+  --color-blue: var(--blue);
+  --color-blue-light: var(--blue-light);
 
   --color-bg: var(--bg);
   --color-surface: var(--surface);
@@ -229,6 +236,13 @@
   }
 
   html {
+    /* A hard backstop against accidental horizontal scroll — e.g. the
+       modular-email hero's exploded view legitimately renders its 3D-
+       tilted planes outside their own box (that's the point: the explode
+       needs room to breathe), and with no ancestor clipping that, the
+       browser was counting it toward the page's scrollable width. */
+    overflow-x: hidden;
+
     /* Reserved permanently, not just while a dialog is open — otherwise
        removing the real scrollbar below widens the viewport by its own
        width, shifting all the content over for as long as a dialog is

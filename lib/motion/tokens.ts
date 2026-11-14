@@ -21,3 +21,12 @@ export const DISTANCE = {
 export const STAGGER = {
   content: 0.15, // seconds a section's content lags behind its heading
 } as const;
+
+/** Reads a CSS custom property's resolved value (e.g. "brand" → the
+ * current theme's --brand) — for GSAP color tweens, which animate actual
+ * color values, not Tailwind classes. Same lookup FailureTrace already did
+ * inline; shared here now that more visuals need it. */
+export function colorVar(name: string): string {
+  if (typeof window === "undefined") return "";
+  return getComputedStyle(document.documentElement).getPropertyValue(`--${name}`).trim();
+}

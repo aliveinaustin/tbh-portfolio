@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Pause, Play } from "lucide-react";
+import PauseButton from "@/components/visuals/PauseButton";
 
 const POSTER = "/work/gearzn/video/gearzn-tour-poster.webp";
 
@@ -79,14 +79,7 @@ export default function ResultVideo() {
       {/* left, not right: the recording's own UI (a product carousel card)
           sits in the right portion of the frame at this crop; the left
           side stays open background for the whole loop. */}
-      <button
-        type="button"
-        onClick={toggle}
-        aria-label={paused ? "Play video" : "Pause video"}
-        className="absolute bottom-3 left-3 inline-flex size-7 items-center justify-center rounded-full border border-border bg-bg/80 text-text-muted hover:text-text"
-      >
-        {paused ? <Play size={12} aria-hidden="true" /> : <Pause size={12} aria-hidden="true" />}
-      </button>
+      <PauseButton paused={paused} onClick={toggle} label="video" className="absolute bottom-3 left-3" />
     </div>
   );
 }

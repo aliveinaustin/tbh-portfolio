@@ -82,12 +82,14 @@ export const caseStudies: CaseStudy[] = [
         reason: "Layout, copy, brand styling and campaign settings had been tangled together in the same markup, so changing one risked breaking another. With each layer owning one job, a campaign change only touches configuration.",
       },
       {
-        decision: "Use one spacing model: 40px on desktop, 20px on mobile",
+        decision: "One horizontal padding model: 40px desktop, 20px mobile",
         reason: "Modules had each been inventing their own page-level spacing, so layouts didn't line up predictably across screen sizes. One rule, owned by the template, makes any combination of modules fit together.",
+        visual: "padding-model",
       },
       {
         decision: "Drive brand styling from theme tokens",
         reason: "Supporting several sub-brands would otherwise mean a separate copy of every module for each one. Tokens for colors and assets let one tested set of modules take on each brand's look.",
+        visual: "theme-tokens",
       },
       {
         decision: "Keep module code locked, with campaign values in a configuration snippet",
@@ -96,10 +98,12 @@ export const caseStudies: CaseStudy[] = [
       {
         decision: "Keep button artwork in a shared library, looked up by brand and CTA name",
         reason: "Image-based buttons were being recreated campaign by campaign. A Data Extension keyed by brand and a readable CTA name returns the right artwork for whichever brand is sending.",
+        visual: "cta-link",
       },
       {
         decision: "Choose the button image separately from its link and tracking",
         reason: "The same artwork appears in many campaigns, but every campaign needs its own URL and UTM parameters. Keeping the two apart lets the image be reused while the tracking stays unique.",
+        visual: "cta-link",
       },
       {
         decision: "Test each module in Litmus, not each campaign",
@@ -108,6 +112,7 @@ export const caseStudies: CaseStudy[] = [
       {
         decision: "Set explicit table sizes and cell backgrounds",
         reason: "Left implicit, Outlook for Windows in dark mode recolors neighboring cells differently from each other. Declaring them explicitly keeps the dark-mode rendering consistent.",
+        visual: "dark-cells",
       },
     ],
     learned: [

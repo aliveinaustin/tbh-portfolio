@@ -4,6 +4,10 @@ import Image from "next/image";
 import BeforeAfterPair from "@/components/visuals/BeforeAfterPair";
 import RecorderGrid from "@/components/visuals/RecorderGrid";
 import FailureTrace from "@/components/visuals/FailureTrace";
+import EmailPaddingVisual from "@/components/visuals/email/EmailPaddingVisual";
+import EmailTokensVisual from "@/components/visuals/email/EmailTokensVisual";
+import EmailCtaLinkVisual from "@/components/visuals/email/EmailCtaLinkVisual";
+import EmailDarkCellsVisual from "@/components/visuals/email/EmailDarkCellsVisual";
 import { gearznWalkthroughGrid } from "@/lib/case-visuals";
 
 /** Order-confirmation screenshot shown close to its native resolution (no
@@ -55,4 +59,8 @@ export const decisionVisuals: Record<string, ReactNode> = {
   attribution: <AttributionCrop />,
   "recorder-grid": <RecorderGrid screens={gearznWalkthroughGrid} />,
   "failure-trace": <FailureTrace />,
+  "padding-model": <EmailPaddingVisual />,
+  "theme-tokens": <EmailTokensVisual />,
+  "cta-link": <EmailCtaLinkVisual />,
+  "dark-cells": <EmailDarkCellsVisual />,
 };

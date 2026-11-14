@@ -7,6 +7,7 @@ import { cn } from "@/lib/cn";
 import { decisionVisuals } from "@/components/visuals/DecisionVisuals";
 import HeroDeck from "@/components/visuals/HeroDeck";
 import ResultVideo from "@/components/visuals/ResultVideo";
+import EmailExplodedHero from "@/components/visuals/email/EmailExplodedHero";
 
 // Only the slugs from generateStaticParams exist; anything else is a 404
 export const dynamicParams = false;
@@ -16,6 +17,7 @@ export const dynamicParams = false;
 // hero visual, a Result video and visual decision rows — other studies get
 // placeholders/plain-text equivalents in those slots until they have art.
 const GEARZN_SLUG = "headless-commerce-platform";
+const MODULAR_EMAIL_SLUG = "modular-email-component-system";
 
 export function generateStaticParams() {
     return caseStudies.map((s) => ({ slug: s.slug }));
@@ -36,6 +38,7 @@ export default async function CaseStudyPage({ params }: PageProps<"/work/[slug]"
     const study = getCaseStudy(slug);
     if (!study) notFound();
     const isGearzn = slug === GEARZN_SLUG;
+    const isModularEmail = slug === MODULAR_EMAIL_SLUG;
 
     return (
         <article className="mx-auto w-full max-w-page px-margin pt-8 pb-16">
@@ -43,7 +46,7 @@ export default async function CaseStudyPage({ params }: PageProps<"/work/[slug]"
                 ← All work
             </Link>
 
-            <Header study={study} isGearzn={isGearzn} />
+            <Header study={study} isGearzn={isGearzn} isModularEmail={isModularEmail} />
             <Body study={study} isGearzn={isGearzn} />
 
             <NextCaseStudy slug={slug} />
@@ -72,7 +75,7 @@ function NextCaseStudy({ slug }: { slug: string }) {
     );
 }
 
-function Header({ study, isGearzn }: { study: CaseStudy; isGearzn: boolean }) {
+function Header({ study, isGearzn, isModularEmail }: { study: CaseStudy; isGearzn: boolean; isModularEmail: boolean }) {
     return (
         <header className="mt-8 grid gap-10 border-b border-border pb-10 lg:grid-cols-2 lg:items-center lg:gap-16">
             <div className="flex flex-col gap-6">
@@ -88,7 +91,13 @@ function Header({ study, isGearzn }: { study: CaseStudy; isGearzn: boolean }) {
                 </dl>
             </div>
 
-            {isGearzn ? <HeroDeck screens={gearznDeck} /> : <HeroPlaceholder />}
+            {isGearzn ? (
+                <HeroDeck screens={gearznDeck} />
+            ) : isModularEmail ? (
+                <EmailExplodedHero />
+            ) : (
+                <HeroPlaceholder />
+            )}
         </header>
     );
 }
@@ -133,6 +142,7 @@ function groupDecisions(decisions: CaseStudy["decisions"]): DecisionRow[] {
 
 function Body({ study, isGearzn }: { study: CaseStudy; isGearzn: boolean }) {
     const rows = groupDecisions(study.decisions);
+    const hasDecisionVisuals = rows.some((row) => row.kind === "visual");
 
     return (
         <div className="flex flex-col gap-16 pt-12">
@@ -180,7 +190,7 @@ function Body({ study, isGearzn }: { study: CaseStudy; isGearzn: boolean }) {
 
             <section className="flex flex-col gap-10">
                 <h2 className="text-subhead">Key decisions</h2>
-                {isGearzn ? (
+                {hasDecisionVisuals ? (
                     <div className="flex flex-col gap-12">
                         {rows.map((row, i) => {
                             if (row.kind === "text") {

@@ -3,14 +3,18 @@ import type { ReactNode } from "react";
 import Section from "@/components/ui/Section";
 import WorkCarousel from "@/components/WorkCarousel";
 import ScreenDeck from "@/components/visuals/ScreenDeck";
+import EmailAssemblyCard from "@/components/visuals/email/EmailAssemblyCard";
+import LifecycleConvergenceCard from "@/components/visuals/lifecycle/LifecycleConvergenceCard";
 import { caseStudies } from "@/lib/case-studies";
 import { gearznDeck } from "@/lib/case-visuals";
 
-// Only GearZN has real screenshots — the SFMC studies keep their empty
-// panels (gatedArtifacts: client work can't be shown publicly) until they
-// have a visual worth showing.
+// GearZN has real screenshots; the modular-email and lifecycle studies'
+// visuals are drawn entirely from geometric primitives (client work, no
+// real copy or marks).
 const visuals: Record<string, ReactNode> = {
   "headless-commerce-platform": <ScreenDeck screens={gearznDeck} />,
+  "modular-email-component-system": <EmailAssemblyCard />,
+  "lifecycle-personalization-system": <LifecycleConvergenceCard />,
 };
 
 export default function Work() {

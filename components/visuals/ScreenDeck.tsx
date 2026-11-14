@@ -1,12 +1,13 @@
 // components/visuals/ScreenDeck.tsx
 "use client";
 
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import Image from "next/image";
-import { Pause, Play } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { gsap } from "@/lib/motion/gsap";
+import { useLoopingTimeline } from "@/lib/motion/useLoopingTimeline";
 import { EASE } from "@/lib/motion/tokens";
+import PauseButton from "@/components/visuals/PauseButton";
 import type { DeckScreen } from "@/lib/case-visuals";
 
 // Three visible depth positions — deeper cards wait hidden at the back and
@@ -83,35 +84,22 @@ const ScreenDeck = forwardRef<ScreenDeckHandle, ScreenDeckProps>(function Screen
   { screens, interval = 2.8, size = "card", onActiveChange, onPausedChange, hideControls },
   ref
 ) {
-  const scopeRef = useRef<HTMLDivElement>(null);
   const order = useRef(screens.map((_, i) => i));
-  const loop = useRef<gsap.core.Tween | null>(null);
-  const visible = useRef(false);
-  const userPaused = useRef(false);
   const [active, setActive] = useState(0);
-  const [paused, setPaused] = useState(false);
 
-  // Reads refs at call time, not render time — safe to call from both the
-  // effect (on visibility change) and the pause button's click handler.
-  const sync = () => {
-    if (!loop.current) return;
-    if (visible.current && !userPaused.current) loop.current.resume();
-    else loop.current.pause();
-  };
-
-  // A ref, not a dependency: an inline arrow prop from the parent would
+  // Refs, not dependencies: an inline arrow prop from the parent would
   // otherwise re-fire the whole effect (tearing down and rebuilding the
   // GSAP context) on every parent render instead of just updating in place.
   const onActiveChangeRef = useRef(onActiveChange);
   onActiveChangeRef.current = onActiveChange;
-  const onPausedChangeRef = useRef(onPausedChange);
-  onPausedChangeRef.current = onPausedChange;
 
-  useEffect(() => {
-    const scope = scopeRef.current;
-    if (!scope) return;
-
-    const ctx = gsap.context(() => {
+  const { scopeRef, paused, toggle } = useLoopingTimeline({
+    deps: [screens, interval],
+    onToggle: onPausedChange,
+    // Applies either way, reduced motion or not — a reduced-motion visitor
+    // still gets a still, fanned deck instead of a flat pile of identical
+    // cards, just never an animated one.
+    setup: (scope) => {
       const cards = gsap.utils.toArray<HTMLElement>("[data-card]", scope);
       const depthZ = (depth: number) => screens.length - depth;
       const fanScale = FAN_SCALE[size];
@@ -120,76 +108,61 @@ const ScreenDeck = forwardRef<ScreenDeckHandle, ScreenDeckProps>(function Screen
         gsap.set(cards[card], { ...slot(depth, fanScale), zIndex: depthZ(depth) })
       );
       onActiveChangeRef.current?.(order.current[0]);
+    },
+    build: (scope) => {
+      const cards = gsap.utils.toArray<HTMLElement>("[data-card]", scope);
+      const depthZ = (depth: number) => screens.length - depth;
+      const fanScale = FAN_SCALE[size];
 
-      // Gated on prefers-reduced-motion here, not by skipping the effect
-      // entirely — the fanned-stack positions above still apply either way,
-      // so reduced-motion visitors get a still, fanned deck instead of a
-      // flat pile of identical cards.
-      gsap.matchMedia().add("(prefers-reduced-motion: no-preference)", () => {
-        const advance = () => {
-          const [front, ...rest] = order.current;
-          order.current = [...rest, front];
+      // Reassigned on every cycle — the controller below always reads the
+      // latest one via this closure, not a snapshot from build() time.
+      let current: gsap.core.Tween;
 
-          gsap
-            .timeline()
-            .to(cards[front], {
-              x: -160,
-              rotationY: -35,
-              rotation: -10,
-              opacity: 0,
-              duration: 0.55,
-              ease: EASE.exit,
-            })
-            .set(cards[front], { ...slot(screens.length - 1, fanScale), rotationY: 0, zIndex: 0 });
+      const advance = () => {
+        const [front, ...rest] = order.current;
+        order.current = [...rest, front];
 
-          rest.forEach((card, depth) =>
-            gsap.to(cards[card], {
-              ...slot(depth, fanScale),
-              zIndex: depthZ(depth),
-              duration: 0.6,
-              delay: 0.15,
-              ease: EASE.enter,
-            })
-          );
+        gsap
+          .timeline()
+          .to(cards[front], {
+            x: -160,
+            rotationY: -35,
+            rotation: -10,
+            opacity: 0,
+            duration: 0.55,
+            ease: EASE.exit,
+          })
+          .set(cards[front], { ...slot(screens.length - 1, fanScale), rotationY: 0, zIndex: 0 });
 
-          setActive(rest[0]);
-          onActiveChangeRef.current?.(rest[0]);
-          // gsap.delayedCall, not setInterval — pausing the returned tween
-          // (via sync()) actually stops the loop instead of just skipping
-          // one callback while a timer keeps running underneath.
-          loop.current = gsap.delayedCall(interval, advance);
-        };
+        rest.forEach((card, depth) =>
+          gsap.to(cards[card], {
+            ...slot(depth, fanScale),
+            zIndex: depthZ(depth),
+            duration: 0.6,
+            delay: 0.15,
+            ease: EASE.enter,
+          })
+        );
 
-        loop.current = gsap.delayedCall(interval, advance);
-        sync();
+        setActive(rest[0]);
+        onActiveChangeRef.current?.(rest[0]);
+        // gsap.delayedCall, not setInterval — pausing it (via the
+        // controller below) actually stops the loop instead of just
+        // skipping one callback while a timer keeps running underneath.
+        current = gsap.delayedCall(interval, advance);
+      };
 
-        return () => loop.current?.kill();
-      });
-    }, scope);
+      current = gsap.delayedCall(interval, advance);
 
-    // Only animate when at least 60% visible — off screen entirely, or a
-    // half-visible neighboring slide in the carousel, both pause it.
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        visible.current = entry.isIntersecting;
-        sync();
-      },
-      { threshold: 0.6 }
-    );
-    io.observe(scope);
-
-    return () => {
-      io.disconnect();
-      ctx.revert();
-    };
-  }, [screens, interval]);
-
-  const toggle = () => {
-    userPaused.current = !userPaused.current;
-    setPaused(userPaused.current);
-    onPausedChangeRef.current?.(userPaused.current);
-    sync();
-  };
+      return {
+        controller: {
+          play: () => current.resume(),
+          pause: () => current.pause(),
+        },
+        cleanup: () => current.kill(),
+      };
+    },
+  });
 
   useImperativeHandle(ref, () => ({ toggle }));
 
@@ -249,16 +222,7 @@ const ScreenDeck = forwardRef<ScreenDeckHandle, ScreenDeckProps>(function Screen
         ))}
       </ol>
 
-      {!hideControls && (
-        <button
-          type="button"
-          onClick={toggle}
-          aria-label={paused ? "Play animation" : "Pause animation"}
-          className="absolute right-3 bottom-3 z-10 inline-flex size-9 items-center justify-center rounded-full border border-border bg-bg/80 text-text-muted hover:text-text"
-        >
-          {paused ? <Play size={14} aria-hidden="true" /> : <Pause size={14} aria-hidden="true" />}
-        </button>
-      )}
+      {!hideControls && <PauseButton paused={paused} onClick={toggle} label="animation" size="md" className="absolute right-3 bottom-3 z-10" />}
     </div>
   );
 });
