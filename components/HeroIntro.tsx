@@ -16,19 +16,6 @@ type HeroIntroProps = {
 // resets on an actual new visit, so it plays once per session, not once ever.
 const INTRO_PLAYED_KEY = "tbh-hero-intro-played";
 
-// Ambient idle spin while the page sits still, and how far a full scroll
-// through the page winds the badge the rest of the way — both counter-
-// clockwise; the aperture blades counter-rotate at the same rate in the
-// opposite direction. "Extremely slow" for idle, tunable from there.
-const WATERMARK_IDLE_SPIN_SECONDS = 180;
-const WATERMARK_SCROLL_ROTATION_DEG = 360;
-// Approximates the old ScrollTrigger `scrub: 1.2` lag (see
-// startWatermarkRotation's own comment for why it's no longer ScrollTrigger
-// itself) — the fraction of the remaining distance to the scroll target
-// closed on each throttled tick. Solved so ~95% of the distance closes in
-// about the same ~1.2s: (1-k)^(1200ms / THROTTLE_MS) ≈ 0.05.
-const WATERMARK_SCROLL_EASE = 0.06;
-
 /**
  * Plays the badge intro once per session — rings establish, the aperture
  * spirals open, accent arcs flicker alive, service labels snap in, and the
@@ -130,115 +117,6 @@ export default function HeroIntro({ badge, children }: HeroIntroProps) {
       return `inset(${topClipInset}px -100vw -100vh -100vw)`;
     }
 
-    // Self-contained (queries `overlay` itself rather than reusing any of
-    // the intro timeline's element references below) so it can be called
-    // from any of the three places the badge resolves into its watermark
-    // state — the alreadyPlayed skip branch, the end of the full intro
-    // timeline, and a scroll-interrupt — without needing those to share scope.
-    function startWatermarkRotation() {
-      const q = gsap.utils.selector(overlay);
-      const badgeCenter = "663.198 663.252";
-      const ccwGroup = [
-        ...q("#outer-ring-assembly"),
-        ...q("#middle-ring-assembly"),
-        ...q("#outer-ring-text"),
-        ...q("#outer-arc-segments"),
-      ];
-      const cwGroup = q("#aperture-segments");
-      gsap.set([...ccwGroup, ...cwGroup], { svgOrigin: badgeCenter });
-
-      // One shared value accumulates from two independent sources — a
-      // never-stopping idle tween and a scroll-scrubbed tween — rather than
-      // having both drive `rotate` directly, which would just have the
-      // later one overwrite the earlier one instead of combining.
-      const rotationState = { idle: 0, scroll: 0 };
-
-      // Relative ("-=360"), not absolute — each repeat keeps subtracting
-      // from wherever it already is, so the accumulated value climbs
-      // indefinitely instead of resetting to 0 and visibly snapping back.
-      const idleTween = gsap.to(rotationState, {
-        idle: "-=360",
-        duration: WATERMARK_IDLE_SPIN_SECONDS,
-        repeat: -1,
-        ease: "none",
-      });
-
-      // Manual scroll-fraction tracking, not GSAP's ScrollTrigger plugin.
-      // ScrollTrigger registers a MutationObserver to auto-refresh its own
-      // trigger measurements whenever the DOM changes — and on the real
-      // homepage (not this isolated function), the actively-looping
-      // carousel card mutates its SVG continuously (MorphSVG rewriting a
-      // path's `d` attribute, DrawSVG, dozens of attribute writes per
-      // second). With this page also running FOUR OTHER ScrollTrigger
-      // instances (Section.tsx creates one per section for its own
-      // scroll-entrance reveal — Work, Skills, About, ContactUs), that
-      // mutation noise was found (via Firefox memory profiling) to
-      // retrigger refresh across every active instance repeatedly, causing
-      // severe memory growth even at rest, with no scrolling involved. This
-      // only ever needed a simple 0-1 "how far down the page" fraction, not
-      // ScrollTrigger's pin/start/end apparatus, so it's computed directly
-      // instead.
-      let scrollTarget = 0;
-      const computeScrollTarget = () => {
-        const max = document.documentElement.scrollHeight - window.innerHeight;
-        const progress = max > 0 ? Math.min(Math.max(window.scrollY / max, 0), 1) : 0;
-        scrollTarget = -progress * WATERMARK_SCROLL_ROTATION_DEG;
-      };
-      computeScrollTarget();
-
-      // Reads window.scrollY (a cheap cached value, not a layout-forcing
-      // read like getBoundingClientRect) — safe to batch to one rAF per
-      // scroll burst the same way syncClipPath is, without the extra
-      // last-value memoization that one needs, since computeScrollTarget
-      // itself does no DOM writes to skip.
-      let scrollRafId: number | null = null;
-      const onScrollForRotation = () => {
-        if (scrollRafId !== null) return;
-        scrollRafId = requestAnimationFrame(() => {
-          scrollRafId = null;
-          computeScrollTarget();
-        });
-      };
-      window.addEventListener("scroll", onScrollForRotation, { passive: true });
-      window.addEventListener("resize", computeScrollTarget, { passive: true });
-
-      // Throttled to ~40fps, not every tick — a CSS-animation version of
-      // this (splitting the ambient spin onto its own compositor-driven
-      // layer, nested under this position:fixed/clip-path overlay) measured
-      // clean on Firefox's CPU/frame-timing, but drove Firefox's GPU memory
-      // into the gigabytes within seconds even at rest — a DIFFERENT,
-      // Firefox-compositor-specific issue from the ScrollTrigger one above
-      // (confirmed NOT a JS-level leak: Chrome's JS heap stayed perfectly
-      // flat under the same conditions). Keeping this as a plain
-      // main-thread gsap.set() avoids that interaction entirely. 100ms
-      // (10fps) and 33ms (30fps) both confirmed stable in Firefox; tuned up
-      // to 24ms for smoothness while staying a meaningful step below the
-      // original 60fps rate, which is where the real cost was.
-      const THROTTLE_MS = 24;
-      let lastUpdate = 0;
-      const applyRotation = () => {
-        const now = performance.now();
-        if (now - lastUpdate < THROTTLE_MS) return;
-        lastUpdate = now;
-        // Eases scroll rotation toward scrollTarget each tick instead of
-        // snapping straight to it — the same "catches up, decelerating"
-        // feel ScrollTrigger's own scrub lag gave, approximated manually.
-        rotationState.scroll += (scrollTarget - rotationState.scroll) * WATERMARK_SCROLL_EASE;
-        const rotation = rotationState.idle + rotationState.scroll;
-        gsap.set(ccwGroup, { rotate: rotation });
-        gsap.set(cwGroup, { rotate: -rotation });
-      };
-      gsap.ticker.add(applyRotation);
-
-      return () => {
-        gsap.ticker.remove(applyRotation);
-        window.removeEventListener("scroll", onScrollForRotation);
-        window.removeEventListener("resize", computeScrollTarget);
-        if (scrollRafId !== null) cancelAnimationFrame(scrollRafId);
-        idleTween.kill();
-      };
-    }
-
     // The header sits below a non-sticky info bar at scroll 0, but as soon
     // as the user scrolls past that bar the header locks to the top of the
     // viewport and its bottom edge jumps up with it. A clip-path computed
@@ -262,8 +140,11 @@ export default function HeroIntro({ badge, children }: HeroIntroProps) {
         // (getBoundingClientRect) plus a style write/repaint on this
         // large, fixed-position overlay. Confirmed via Firefox testing as
         // the actual cause of a severe, scroll-triggered performance
-        // collapse — separate from (and on top of) the ambient-rotation
-        // cost fixed in startWatermarkRotation() above.
+        // collapse. (A second, separate issue — the watermark's own
+        // rotation, both ambient and scroll-linked — was found to crash
+        // Firefox outright at this element's size; the badge no longer
+        // rotates once it reaches its full watermark size, only this
+        // clip-path position tracking remains.)
         if (clipPathRafId !== null) return;
         clipPathRafId = requestAnimationFrame(() => {
           clipPathRafId = null;
@@ -289,25 +170,21 @@ export default function HeroIntro({ badge, children }: HeroIntroProps) {
     // the watermark act like a pinned backdrop — page content scrolls over
     // it — rather than a decoration that scrolls away with Hero itself.
     if (alreadyPlayed) {
-      let stopRotation: (() => void) | null = null;
       if (prefersReducedMotion) {
         gsap.set(overlay, { autoAlpha: 0 });
       } else {
         gsap.set(overlay, { visibility: "visible", opacity: 1, zIndex: -1, clipPath: computeWatermarkClipPath() });
         gsap.set(badgeEl, { scale: 2.4, rotate: -20, x: -badgeSize * 0.35, opacity: 0.14 });
         overlay.classList.add("hero-badge-watermark");
-        stopRotation = startWatermarkRotation();
       }
       gsap.set(content, { autoAlpha: 1 });
-      // Not a bare `return;` — this path sets up syncClipPath (and, for
-      // motion-safe visits, the rotation loop) above same as the full-intro
-      // path below, so it needs matching cleanup too, or every remount here
-      // (e.g. navigating between case study pages) leaks another listener
-      // and another running rotation.
+      // Not a bare `return;` — this path sets up syncClipPath above same as
+      // the full-intro path below, so it needs matching cleanup too, or
+      // every remount here (e.g. navigating between case study pages)
+      // leaks another listener.
       return () => {
         if (syncClipPath) window.removeEventListener("scroll", syncClipPath);
         if (clipPathRafId !== null) cancelAnimationFrame(clipPathRafId);
-        if (stopRotation) stopRotation();
       };
     }
 
@@ -323,10 +200,6 @@ export default function HeroIntro({ badge, children }: HeroIntroProps) {
         // lets the cleanup below cancel it if this invocation is the one
         // that gets torn down.
         const markPlayedTimer = setTimeout(() => sessionStorage.setItem(INTRO_PLAYED_KEY, "1"), 0);
-        // Set by whichever of the two watermark hand-offs below actually
-        // fires — the timeline reaching its own end, or a scroll interrupt
-        // cutting it short — and read by this callback's own cleanup.
-        let stopRotation: (() => void) | null = null;
         const q = gsap.utils.selector(overlay);
         // The badge's circles are all centered on the viewBox's exact midpoint —
         // svgOrigin pins rotation/scale there regardless of each group's own
@@ -439,7 +312,6 @@ export default function HeroIntro({ badge, children }: HeroIntroProps) {
           .call(() => {
             overlay.classList.add("hero-badge-watermark");
             overlay.style.clipPath = computeWatermarkClipPath();
-            stopRotation = startWatermarkRotation();
           }, [], "<")
           // The badge doesn't vanish — it blows up into a big, rotated, flat-red
           // watermark parked behind the real content, instead of disappearing.
@@ -492,7 +364,6 @@ export default function HeroIntro({ badge, children }: HeroIntroProps) {
           // reads as "wrapping up" rather than a hard cut.
           gsap.set(overlay, { zIndex: -1, clipPath: computeWatermarkClipPath() });
           overlay.classList.add("hero-badge-watermark");
-          stopRotation = startWatermarkRotation();
           gsap.to(badgeEl, {
             scale: 2.4,
             rotate: -20,
@@ -515,7 +386,6 @@ export default function HeroIntro({ badge, children }: HeroIntroProps) {
           window.removeEventListener("scroll", onScroll);
           clearTimeout(markPlayedTimer);
           tl.kill();
-          if (stopRotation) stopRotation();
         };
       });
 
