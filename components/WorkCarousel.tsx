@@ -6,6 +6,7 @@ import useEmblaCarousel from "embla-carousel-react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/cn";
 import CaseStudyCard from "@/components/CaseStudyCard";
+import { CarouselFocusContext } from "@/lib/motion/carouselFocus";
 import type { CaseStudy } from "@/lib/case-studies";
 
 type WorkCarouselProps = {
@@ -70,7 +71,9 @@ export default function WorkCarousel({ studies, visuals }: WorkCarouselProps) {
                     }
                   }}
                 >
-                  <CaseStudyCard study={study} visual={visuals?.[study.slug]} />
+                  <CarouselFocusContext.Provider value={isSelected}>
+                    <CaseStudyCard study={study} visual={visuals?.[study.slug]} />
+                  </CarouselFocusContext.Provider>
                 </div>
               );
             })}
@@ -103,6 +106,15 @@ export default function WorkCarousel({ studies, visuals }: WorkCarouselProps) {
               type="button"
               aria-label="Previous case study"
               disabled={!canScrollPrev}
+              // Embla can only know real scroll capability after it measures
+              // the mounted DOM client-side — canScrollPrev/Next are false
+              // (the only value SSR can render) until that first measurement
+              // lands, which can resolve synchronously enough on mount to
+              // flag as a hydration mismatch even though it isn't one: the
+              // server's "unknown yet" false and the client's immediate
+              // correction are both legitimate for a value that can't exist
+              // before the DOM does.
+              suppressHydrationWarning
               onClick={() => emblaApi?.scrollPrev()}
               className="inline-flex size-10 items-center justify-center rounded-full border border-border text-text transition hover:bg-surface-high disabled:opacity-30 disabled:pointer-events-none"
             >
@@ -112,6 +124,7 @@ export default function WorkCarousel({ studies, visuals }: WorkCarouselProps) {
               type="button"
               aria-label="Next case study"
               disabled={!canScrollNext}
+              suppressHydrationWarning
               onClick={() => emblaApi?.scrollNext()}
               className="inline-flex size-10 items-center justify-center rounded-full border border-border text-text transition hover:bg-surface-high disabled:opacity-30 disabled:pointer-events-none"
             >

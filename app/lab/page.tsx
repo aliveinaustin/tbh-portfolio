@@ -18,6 +18,12 @@ import ConsolePanel from "@/components/ui/ConsolePanel";
 import EditorialCard from "@/components/ui/EditorialCard";
 import MetricCluster from "@/components/ui/MetricCluster";
 import FormField from "@/components/ui/FormField";
+import MorphComparison from "@/components/visuals/email/MorphComparison";
+import EmailAssemblyCard from "@/components/visuals/email/EmailAssemblyCard";
+import FocusedWrapper from "@/components/visuals/email/FocusedWrapper";
+import Work from "@/components/Work";
+import BadgeRotationTest from "@/components/ui/BadgeRotationTest";
+import TbhBadge from "@/components/ui/TbhBadge";
 import { notFound } from "next/navigation";
 
 
@@ -148,6 +154,66 @@ export default function LabPage() {
                     </Specimen>
                 </div>
             </Section >
+
+            <Section id="morph-comparison" eyebrow="02 // PERF" title="Envelope Morph Comparison">
+                <div className="flex flex-col gap-8">
+                    <Specimen name="MorphComparison">
+                        <MorphComparison />
+                    </Specimen>
+                </div>
+            </Section>
+
+            {/* Isolates whether EmailAssemblyCard's own timeline complexity is
+                the Firefox perf cause, independent of the carousel/page it
+                normally sits inside — same component, no carousel chrome. */}
+            <Section id="email-card-standalone" eyebrow="02 // PERF" title="EmailAssemblyCard (standalone)">
+                <div className="flex flex-col gap-8">
+                    <Specimen name="EmailAssemblyCard">
+                        <div className="aspect-video w-full max-w-xl bg-surface">
+                            <EmailAssemblyCard />
+                        </div>
+                    </Specimen>
+                </div>
+            </Section>
+
+            {/* Same card, but routed through CarouselFocusContext (value
+                true — same effective value as the default, just actually
+                going through React context/useContext instead of relying
+                on createContext's bare default) — isolates whether MY
+                focus-gating code itself (added this session) is the cause,
+                independent of Embla or any carousel chrome. */}
+            <Section id="email-card-context" eyebrow="02 // PERF" title="EmailAssemblyCard (via CarouselFocusContext)">
+                <div className="flex flex-col gap-8">
+                    <Specimen name="EmailAssemblyCard">
+                        <FocusedWrapper>
+                            <div className="aspect-video w-full max-w-xl bg-surface">
+                                <EmailAssemblyCard />
+                            </div>
+                        </FocusedWrapper>
+                    </Specimen>
+                </div>
+            </Section>
+
+            {/* Isolates JUST the badge's rotation mechanism (real SVG, the
+                CSS ambient spin + GSAP scroll-linked rotation from the
+                HeroIntro fix), decoupled from the rest of HeroIntro's
+                machinery (sessionStorage, the intro timeline, the
+                clip-path scroll listener) — next to the real production
+                carousel, since the slowdown only ever showed up with both
+                present together. */}
+            <Section id="badge-rotation-work" eyebrow="02 // PERF" title="Badge Rotation + Work">
+                <div className="flex flex-col gap-8">
+                    <Specimen name="BadgeRotationTest">
+                        <BadgeRotationTest badge={<TbhBadge className="h-full w-full" />} />
+                    </Specimen>
+                </div>
+            </Section>
+
+            {/* The exact production carousel assembly (real Embla, all 3
+                real cards) in isolation — every narrower test above came
+                back clean, so this checks whether Embla itself or having
+                all three visuals mounted together is what reproduces it. */}
+            <Work />
 
         </>
     );

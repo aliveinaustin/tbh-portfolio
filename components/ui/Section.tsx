@@ -132,9 +132,7 @@ export default function Section({
         );
         if (targets.length === 0) return;
 
-        const tl = gsap.timeline({
-          scrollTrigger: { trigger: root, start: "top 80%", once: true },
-        });
+        const tl = gsap.timeline({ paused: true });
 
         targets.forEach((el, index) => {
           tl.from(
@@ -143,6 +141,34 @@ export default function Section({
             index === 0 ? 0 : STAGGER.content
           );
         });
+
+        // IntersectionObserver, not ScrollTrigger, for this one-shot
+        // "reveal once scrolled into view" — every section on the homepage
+        // used to run its own ScrollTrigger instance for this (one per
+        // Section, all `once: true` but still actively watched until they
+        // fire), and ScrollTrigger's own MutationObserver-based
+        // auto-refresh (which re-measures trigger positions on any DOM
+        // change that might affect layout) was found, via Firefox memory
+        // profiling, to retrigger repeatedly against this page's
+        // continuously-animating hero watermark and carousel cards —
+        // several still-armed instances compounding into severe memory
+        // growth even with no scrolling happening. IntersectionObserver is
+        // what every other looping visual in this codebase already uses
+        // for its own visibility gating, with none of that overhead.
+        // rootMargin approximates ScrollTrigger's old "top 80%": the
+        // element is treated as intersecting once its top has scrolled up
+        // into the viewport's top 80%, not merely touched the bottom edge.
+        const io = new IntersectionObserver(
+          ([entry]) => {
+            if (!entry.isIntersecting) return;
+            tl.play();
+            io.disconnect();
+          },
+          { rootMargin: "0px 0px -20% 0px" }
+        );
+        io.observe(root);
+
+        return () => io.disconnect();
       });
     }, root);
 
