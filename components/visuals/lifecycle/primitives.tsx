@@ -159,15 +159,17 @@ export function DataTable({
   );
 }
 
-/** A small key glyph — a circular head, a shaft, two teeth. Brand-red:
- * the merged Subscriber Key, the one place red marks a value rather than
- * an active/error state. */
-export function KeyIcon({ cx, cy, size = 11, className }: { cx: number; cy: number; size?: number; className?: string }) {
+/** A small key glyph — a circular head, a shaft, two teeth. Brand-red by
+ * default: the merged Subscriber Key, the one place red marks a value
+ * rather than an active/error state. `color` overrides it for contexts
+ * where the key marks an identity concept generically (e.g. a heading
+ * icon) rather than a just-merged value. */
+export function KeyIcon({ cx, cy, size = 11, color = "var(--color-brand)", className }: { cx: number; cy: number; size?: number; color?: string; className?: string }) {
   const r = size * 0.3;
   const headCx = cx - size * 0.32;
   const shaftX2 = cx + size * 0.42;
   return (
-    <g className={className} fill="none" stroke="var(--color-brand)" strokeWidth={1.4} strokeLinecap="round">
+    <g className={className} fill="none" stroke={color} strokeWidth={1.4} strokeLinecap="round">
       <circle cx={headCx} cy={cy} r={r} />
       <line x1={headCx + r} y1={cy} x2={shaftX2} y2={cy} />
       <line x1={shaftX2 - size * 0.16} y1={cy} x2={shaftX2 - size * 0.16} y2={cy + size * 0.22} />
@@ -185,6 +187,8 @@ export function IdentityBadge({
   height = 14,
   label,
   dashed = false,
+  fontSize = 7,
+  color = "var(--color-text-faint)",
   className,
 }: {
   x: number;
@@ -193,6 +197,8 @@ export function IdentityBadge({
   height?: number;
   label: string;
   dashed?: boolean;
+  fontSize?: number;
+  color?: string;
   className?: string;
 }) {
   return (
@@ -204,12 +210,12 @@ export function IdentityBadge({
         height={height}
         rx={height / 2}
         fill="var(--color-surface)"
-        stroke="var(--color-text-faint)"
+        stroke={color}
         strokeWidth={1}
         strokeDasharray={dashed ? "2 2" : undefined}
         opacity={dashed ? 0.6 : 1}
       />
-      <text x={x + width / 2} y={y + height / 2 + 2.6} textAnchor="middle" fontSize={7} fontFamily="var(--font-mono)" fontWeight={700} fill="var(--color-text-faint)" opacity={dashed ? 0.6 : 1}>
+      <text x={x + width / 2} y={y + height / 2 + 2.6} textAnchor="middle" fontSize={fontSize} fontFamily="var(--font-mono)" fontWeight={700} fill={color} opacity={dashed ? 0.6 : 1}>
         {label}
       </text>
     </g>

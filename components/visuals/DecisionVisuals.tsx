@@ -8,6 +8,7 @@ import EmailPaddingVisual from "@/components/visuals/email/EmailPaddingVisual";
 import EmailTokensVisual from "@/components/visuals/email/EmailTokensVisual";
 import EmailCtaLinkVisual from "@/components/visuals/email/EmailCtaLinkVisual";
 import EmailDarkCellsVisual from "@/components/visuals/email/EmailDarkCellsVisual";
+import IdentityFallbackVisual from "@/components/visuals/lifecycle/IdentityFallbackVisual";
 import { gearznWalkthroughGrid } from "@/lib/case-visuals";
 
 /** Order-confirmation screenshot shown close to its native resolution (no
@@ -63,4 +64,5 @@ export const decisionVisuals: Record<string, ReactNode> = {
   "theme-tokens": <EmailTokensVisual />,
   "cta-link": <EmailCtaLinkVisual />,
   "dark-cells": <EmailDarkCellsVisual />,
+  "identity-fallback": <IdentityFallbackVisual />,
 };

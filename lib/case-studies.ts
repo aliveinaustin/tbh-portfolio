@@ -161,6 +161,7 @@ export const caseStudies: CaseStudy[] = [
       {
         decision: "Use the Subscriber Key (the Salesforce ID) as the primary key, with email as a fallback",
         reason: "Some subscribers arrived with a Subscriber Key and others with only an email address. Keying on the ID preserves existing Salesforce records, and the email fallback means email-only sign-ups aren't turned away.",
+        visual: "identity-fallback",
       },
       {
         decision: "Keep a source table per pathway, plus one normalized master table",
