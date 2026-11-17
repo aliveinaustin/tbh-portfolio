@@ -23,7 +23,6 @@ export default function Eyebrow({ zone, caption, status = "online", pulse = fals
   return (
     <p className="flex flex-wrap items-center gap-2.5 text-label">
       <span className="inline-flex items-center gap-2.5">
-        <StatusDot status={status} pulse={pulse} />
         <span className="text-text lg:whitespace-nowrap">{zone}</span>
       </span>
       {caption && (

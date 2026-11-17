@@ -77,7 +77,7 @@ export default function MobileNav() {
                 {/* Bottom group, pushed down by mt-auto */}
                 <div className="mt-auto flex flex-col gap-3 border-t border-border px-margin py-6">
                     <Button href="#contact" onClick={close} className="w-full" icon="→">Initiate Project</Button>
-                    <Button href="/resume.pdf" download onClick={close} className="w-full" icon={<FileDown size={14} />} iconPosition="start" variant="wire">Download Resume</Button>
+                    <Button href="/Thomas_Hays_Resume.pdf" download onClick={close} className="w-full" icon={<FileDown size={14} />} iconPosition="start" variant="wire">Download Resume</Button>
                 </div>
             </dialog>
         </>

@@ -21,7 +21,6 @@ export default function Work() {
   return (
     <Section
       id="work"
-      eyebrow="Selected Work"
       title="Case Studies"
       bleed={<WorkCarousel studies={caseStudies} visuals={visuals} />}
     />

@@ -11,8 +11,6 @@ export default function Footer() {
         <footer className="mx-auto w-full max-w-page px-margin">
             <div className="flex flex-col gap-3 lg:gap-6 border-t border-border pt-6 pb-10 lg:flex-row lg:items-baseline lg:justify-between">
                 <div className="order-last flex min-w-0 items-baseline gap-6 lg:order-0 lg:flex-1">
-
-                    <BarcodeStrip className="hidden h-2.5 w-auto min-w-0 max-w-64 flex-1 text-accent-dim lg:block" />
                     <span className="text-label whitespace-nowrap text-text-muted">
                         Thomas B. Hays &copy; {new Date().getFullYear()}
                     </span>
