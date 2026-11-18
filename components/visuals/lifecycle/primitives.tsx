@@ -9,6 +9,82 @@
 
 export type SourceKind = "website" | "application" | "legacy";
 
+function MagnifierIcon({ cx, cy, size, color }: { cx: number; cy: number; size: number; color: string }) {
+  const r = size * 0.32;
+  const handleX = cx + r * 0.72;
+  const handleY = cy + r * 0.72;
+  return (
+    <g fill="none" stroke={color} strokeWidth={1.4} strokeLinecap="round">
+      <circle cx={cx - size * 0.1} cy={cy - size * 0.1} r={r} />
+      <line x1={handleX - size * 0.06} y1={handleY - size * 0.06} x2={cx + size * 0.5} y2={cy + size * 0.5} />
+    </g>
+  );
+}
+
+/** A dashed, dim "looking something up" box — magnifier icon + label —
+ * that lights to a solid border once the line reaching it arrives.
+ * Shared by LookupBeforeWriteVisual's "LOOKUP" step and OptInTokenVisual's
+ * "STATUS: ALREADY CONFIRMED" check. */
+export function LookupBox({
+  x,
+  y,
+  width,
+  height,
+  label,
+  fontScale = 1,
+}: {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  label: string;
+  fontScale?: number;
+}) {
+  return (
+    <g>
+      <rect data-lookup-box x={x} y={y} width={width} height={height} rx={6} fill="var(--color-surface)" stroke="var(--color-text-faint)" strokeWidth={1} strokeDasharray="3 3" />
+      <g transform={`translate(${x + 16}, ${y + height / 2})`}>
+        <MagnifierIcon cx={0} cy={0} size={10} color="var(--color-text-faint)" />
+      </g>
+      <text data-lookup-text x={x + 28} y={y + height / 2 + 3} fontSize={7.5 * fontScale} fontFamily="var(--font-mono)" fontWeight={700} fill="var(--color-text-faint)" letterSpacing={0.2}>
+        {label}
+      </text>
+    </g>
+  );
+}
+
+/** A small triangle marking where a line arrives — hidden (opacity 0 by
+ * default) until that line's own draw completes. The coordinate given is
+ * the point itself (not the shape's trailing edge), so a caller can pull
+ * it a few units short of whatever border it's approaching instead of
+ * overlapping it. */
+export function Arrowhead({
+  tip,
+  cross,
+  id,
+  color,
+  direction,
+}: {
+  /** Position along the line's own travel axis — x for a rightward
+   * arrow, y for a downward or upward one. */
+  tip: number;
+  /** Position along the perpendicular axis — the line's fixed y (or x). */
+  cross: number;
+  id: string;
+  color: string;
+  direction: "right" | "down" | "up";
+}) {
+  const s = 4.5;
+  // "back" sits behind the tip along the travel axis — opposite the
+  // direction of travel — so the apex (at tip) is always the leading point.
+  const back = direction === "up" ? tip + s * 1.3 : tip - s * 1.3;
+  const points =
+    direction === "right"
+      ? `${back},${cross - s} ${tip},${cross} ${back},${cross + s}`
+      : `${cross - s},${back} ${cross},${tip} ${cross + s},${back}`;
+  return <polygon data-arrowhead={id} points={points} fill={color} opacity={0} />;
+}
+
 /** A small 2px-stroke glyph for one of the three subscriber pathways — a
  * globe (circle, meridian ellipse, equator), a form (rounded rect, three
  * lines) or an archive box (a lid plus a box with a slot). */

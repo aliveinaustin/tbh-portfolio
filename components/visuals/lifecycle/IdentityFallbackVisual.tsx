@@ -5,7 +5,7 @@ import { gsap } from "@/lib/motion/gsap";
 import { colorVar } from "@/lib/motion/tokens";
 import { useLoopingTimeline } from "@/lib/motion/useLoopingTimeline";
 import PauseButton from "@/components/visuals/PauseButton";
-import { KeyIcon, IdentityBadge, PillCheck } from "@/components/visuals/lifecycle/primitives";
+import { KeyIcon, IdentityBadge, PillCheck, Arrowhead } from "@/components/visuals/lifecycle/primitives";
 
 // Two subscriber records converge on the same Subscriber Key table — the
 // same four-stage sequence on both viewports, desktop running its lanes
@@ -158,35 +158,6 @@ function FallbackBox({ x, y, width, height, fontScale = 1 }: { x: number; y: num
       </text>
     </g>
   );
-}
-
-/** A small triangle marking where a line arrives — hidden until that
- * line's own draw completes. The coordinate given is the point itself
- * (not the shape's trailing edge), pulled a few units short of the
- * table's actual border so the tip approaches it without overlapping. */
-function Arrowhead({
-  tip,
-  cross,
-  id,
-  color,
-  direction,
-}: {
-  /** Position along the line's own travel axis — x for a rightward
-   * arrow, y for a downward one. */
-  tip: number;
-  /** Position along the perpendicular axis — the line's fixed y (or x). */
-  cross: number;
-  id: string;
-  color: string;
-  direction: "right" | "down";
-}) {
-  const s = 4.5;
-  const back = tip - s * 1.3;
-  const points =
-    direction === "right"
-      ? `${back},${cross - s} ${tip},${cross} ${back},${cross + s}`
-      : `${cross - s},${back} ${cross},${tip} ${cross + s},${back}`;
-  return <polygon data-arrowhead={id} points={points} fill={color} opacity={0} />;
 }
 
 function Row({

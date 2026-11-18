@@ -170,14 +170,17 @@ export const caseStudies: CaseStudy[] = [
       {
         decision: "Look up an existing record before writing",
         reason: "Repeat interactions were overwriting the original lifecycle dates. Checking for an existing record first preserves those timestamps instead of resetting them.",
+        visual: "lookup-before-write",
       },
       {
         decision: "Use expiring tokens for double opt-in",
         reason: "Confirmation needed to be an explicit state, and a repeat visit shouldn't push an already-confirmed subscriber back to pending. Expiring tokens make confirmation a clear, time-limited step.",
+        visual: "opt-in-token",
       },
       {
         decision: "Roll out the API integration one layer at a time",
         reason: "CloudPages report almost every failure as the same generic server error. Adding validation, the data write, the API request, OAuth and logging in separate steps meant any new failure could only come from the layer just added.",
+        visual: "layer-rollout",
       },
       {
         decision: "Store integration settings in their own configuration table",

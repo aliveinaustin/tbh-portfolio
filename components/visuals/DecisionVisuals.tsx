@@ -9,6 +9,9 @@ import EmailTokensVisual from "@/components/visuals/email/EmailTokensVisual";
 import EmailCtaLinkVisual from "@/components/visuals/email/EmailCtaLinkVisual";
 import EmailDarkCellsVisual from "@/components/visuals/email/EmailDarkCellsVisual";
 import IdentityFallbackVisual from "@/components/visuals/lifecycle/IdentityFallbackVisual";
+import LookupBeforeWriteVisual from "@/components/visuals/lifecycle/LookupBeforeWriteVisual";
+import OptInTokenVisual from "@/components/visuals/lifecycle/OptInTokenVisual";
+import LayerRolloutVisual from "@/components/visuals/lifecycle/LayerRolloutVisual";
 import { gearznWalkthroughGrid } from "@/lib/case-visuals";
 
 /** Order-confirmation screenshot shown close to its native resolution (no
@@ -65,4 +68,7 @@ export const decisionVisuals: Record<string, ReactNode> = {
   "cta-link": <EmailCtaLinkVisual />,
   "dark-cells": <EmailDarkCellsVisual />,
   "identity-fallback": <IdentityFallbackVisual />,
+  "lookup-before-write": <LookupBeforeWriteVisual />,
+  "opt-in-token": <OptInTokenVisual />,
+  "layer-rollout": <LayerRolloutVisual />,
 };
