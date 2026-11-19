@@ -38,7 +38,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         {process.env.NODE_ENV === "production" && (
-          <Script src={UMAMI_SRC} data-website-id={UMAMI_WEBSITE_ID} data-domains="thomasbrandonhays.com" strategy="afterInteractive" />
+          <Script src={UMAMI_SRC} data-website-id={UMAMI_WEBSITE_ID} data-domains="thomasbrandonhays.com" data-exclude-hash="true" strategy="afterInteractive" />
         )}
         <HashFocusManager />
         <SkipLink />
