@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import SkipLink from "@/components/ui/SkipLink";
 import UtilityBar from "@/components/ui/UtilityBar";
 import Header from "@/components/Header"
 import Footer from "@/components/Footer"
 import HashFocusManager from "@/components/HashFocusManager"
+import { UMAMI_SRC, UMAMI_WEBSITE_ID } from "@/lib/analytics"
 
 const inter = Inter({
   variable: "--font-inter",
@@ -35,6 +37,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        {process.env.NODE_ENV === "production" && (
+          <Script src={UMAMI_SRC} data-website-id={UMAMI_WEBSITE_ID} data-domains="thomasbrandonhays.com" strategy="afterInteractive" />
+        )}
         <HashFocusManager />
         <SkipLink />
         <UtilityBar />

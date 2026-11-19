@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { sendContact } from "@/app/actions/contact";
 import type { ContactField, ContactState } from "@/lib/contact";
 import Button from "@/components/ui/Button";
+import { trackEvent } from "@/lib/analytics";
 
 const initial: ContactState = { status: "idle" };
 
@@ -12,6 +13,12 @@ const fieldClasses =
 
 export default function ContactForm() {
     const [state, formAction, pending] = useActionState(sendContact, initial);
+
+    useEffect(() => {
+        if (state.status === "success") {
+            trackEvent("contact-submit");
+        }
+    }, [state.status]);
 
     if (state.status === "success") {
         return (

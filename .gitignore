@@ -44,3 +44,5 @@ next-env.d.ts
 # records has been taken down so it can't be re-recorded. Only the
 # processed outputs in public/work/gearzn/video/ are tracked.
 public/work/gearzn/gearzn-desktop-1440.mp4
+
+NOTES.private.md

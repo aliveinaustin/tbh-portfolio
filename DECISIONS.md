@@ -91,6 +91,21 @@ The droplet never builds. Push to `main` triggers install, build, assembly of th
 
 Case studies, skills groups, and client entries live in TypeScript files. Single author, no editorial workflow — a CMS would be more infrastructure than the content justifies.
 
+### Runtime secrets: static env file, Doppler as source of truth
+
+The systemd unit loads `/etc/portfolio/app.env` (root-owned, `600`) via `EnvironmentFile=`. That file is a one-time export from Doppler. Deliberately **not** using `doppler run --` in `ExecStart`: it makes every service start depend on reaching Doppler's API, so a Doppler outage during a reboot means the site doesn't come up. With a handful of secrets that rarely change, a static file is the more reliable choice.
+
+Doppler stays the source of truth. When a secret changes, edit it in Doppler, then regenerate the file and restart:
+
+```bash
+doppler secrets download --no-file --format env --project <proj> --config prd \
+  | sudo tee /etc/portfolio/app.env > /dev/null && sudo systemctl restart portfolio
+```
+
+Never edit `app.env` by hand. If manual syncing becomes a chore, move this into the deploy workflow as a step.
+
+CI doesn't use Doppler at all: `npm run build` gets no injected env. That's fine because server secrets (e.g. `RESEND_API_KEY`) are read at request time, not build time.
+
 ### Search: generated robots.txt and sitemap
 
 `app/robots.ts` and `app/sitemap.ts` produce `/robots.txt` (`text/plain`) and `/sitemap.xml` (`application/xml`). No static copies in `public/`, since they would collide with the generated routes. The sitemap maps over `caseStudies`, so a new study gets listed automatically. No `lastModified`: stamping `new Date()` would claim every page changed on every deploy.
@@ -104,6 +119,26 @@ No `llms.txt`: no major AI crawler reads it, and it isn't worth maintaining for 
 `app/lab/layout.tsx` calls `notFound()` in production unless `ENABLE_LAB === "true"`, so `/lab` and any sub-routes return a real 404. `force-dynamic` makes it a runtime check, so turning it on needs a server restart, not a rebuild. It's excluded from the sitemap and deliberately *not* blocked in robots.txt: a crawler that can't load a page never sees its noindex.
 
 Not a basic-auth gate: a login wall serves nobody, since recruiters can't see it and I have it locally. If the catalog gets polished enough to show, set `ENABLE_LAB=true`, add `robots: { index: false }`, and link it from the footer as "Component library."
+
+### Analytics: self-hosted Umami, not GA4
+
+GA4 sets cookies, which means Consent Mode plus a banner, and a banner is clutter a recruiter has to dismiss. Umami is cookieless (no banner needed), free when self-hosted, and keeps the data on my server. GA4 and Consent Mode experience is already demonstrated in the commerce case study.
+
+Layout on the droplet:
+- `/opt/umami/` holds `docker-compose.yml` plus `.env` (`600`; generated on the droplet, never committed). Source copies are in `infra/umami/`.
+- Umami listens on `127.0.0.1:3001` (the app uses 3000). Localhost binding matters because Docker-published ports bypass UFW.
+- Postgres publishes no port and is reachable only on the internal Docker network.
+- Memory caps: Umami 512 MB, Postgres 384 MB, so analytics can't starve the site. A 2 GB swapfile was already in place.
+- Served at `stats.thomasbrandonhays.com` via nginx and certbot.
+- The tracker is served as `s.js`, not `umami.js`, so it matches fewer ad-blocker lists.
+- Backups: nightly `pg_dump` from cron, kept 14 days, in `/opt/umami/backups`.
+- Update: run `backup-umami.sh` by hand first, then `docker compose pull && docker compose up -d`.
+
+The website ID is **hardcoded**, not an env var. It isn't secret (it ships in every page's HTML), and CI has no Doppler, so wiring an env var into the build just for this would be overhead. The tracker loads only in production, and `data-domains="thomasbrandonhays.com"` stops local builds from sending data.
+
+Events: `resume-download`, `outbound-linkedin`, `outbound-github`, and `contact-submit`. `contact-submit` fires from a `useEffect` when `useActionState` moves to `"success"`, not during render.
+
+`Button` gained a typed `trackEvent?: AnalyticsEvent` prop (renders `data-umami-event`) rather than forwarding arbitrary `data-*` attributes. The union lives in `lib/analytics.ts`, so a typo in an event name is a compile error instead of a silently missing event in Umami.
 
 ---
 

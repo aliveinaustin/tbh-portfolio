@@ -21,7 +21,7 @@ export default function Hero() {
                                 <p className="text-body text-text-muted max-w-prose">Email that holds up in Outlook, banners that fit the file-size budget, and web front ends that load fast. HTML email, SFMC, HTML5 display, React, and WordPress, built over 11 years at an agency.</p>
                                 <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                                     <Button href="#contact" icon="→">Initiate Project / Hire</Button>
-                                    <Button href="/Thomas_Hays_Resume.pdf" download icon={<FileDown size={14} />} iconPosition="start" variant="wire">Download Resume</Button>
+                                    <Button href="/Thomas_Hays_Resume.pdf" download icon={<FileDown size={14} />} iconPosition="start" variant="wire" trackEvent="resume-download">Download Resume</Button>
                                 </div>
                             </div>
                             <div className="border-t border-border pt-8">

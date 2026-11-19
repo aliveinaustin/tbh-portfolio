@@ -22,11 +22,11 @@ export default function Contact() {
                         <CopyPill label="Email" value="tbh@thomasbrandonhays.com" className="w-full sm:w-fit" />
 
                         <div className="flex flex-wrap gap-3">
-                            <Button href="/Thomas_Hays_Resume.pdf" download variant="wire" icon={<FileDown size={14} />} iconPosition="start">
+                            <Button href="/Thomas_Hays_Resume.pdf" download variant="wire" icon={<FileDown size={14} />} iconPosition="start" trackEvent="resume-download">
                                 Download Resume
                             </Button>
-                            <Button href="https://github.com/aliveinaustin" variant="wire">GitHub</Button>
-                            <Button href="https://www.linkedin.com/in/aliveinaustin/" variant="wire">LinkedIn</Button>
+                            <Button href="https://github.com/aliveinaustin" variant="wire" trackEvent="outbound-github">GitHub</Button>
+                            <Button href="https://www.linkedin.com/in/aliveinaustin/" variant="wire" trackEvent="outbound-linkedin">LinkedIn</Button>
                         </div>
                     </div>
 

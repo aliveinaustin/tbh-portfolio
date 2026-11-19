@@ -1,0 +1,54 @@
+# Umami analytics for thomasbrandonhays.com
+# Location on droplet: /opt/umami/docker-compose.yml
+# Secrets live in /opt/umami/.env (chmod 600, never committed). See .env.example.
+
+services:
+  umami:
+    image: ghcr.io/umami-software/umami:3.5.0   # Pin Umami image to 3.5.0
+    container_name: umami
+    restart: unless-stopped
+    init: true
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://umami:${POSTGRES_PASSWORD}@db:5432/umami
+      TRACKER_SCRIPT_NAME: s.js        # less likely to match ad-blocker lists than umami.js
+      DISABLE_TELEMETRY: 1
+    ports:
+      # Localhost only. The Next.js app already uses 3000, so Umami gets 3001.
+      # Binding to 127.0.0.1 matters: Docker-published ports bypass UFW.
+      - "127.0.0.1:3001:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    mem_limit: 512m
+    networks: [internal]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/heartbeat || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  db:
+    image: postgres:16-alpine
+    container_name: umami-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: umami
+      POSTGRES_USER: umami
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - umami-db-data:/var/lib/postgresql/data
+    # No ports: Postgres is reachable only on the internal Docker network.
+    mem_limit: 384m
+    networks: [internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U umami -d umami"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  umami-db-data:
+
+networks:
+  internal:

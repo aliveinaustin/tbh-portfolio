@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import NavLink from "@/components/ui/NavLink";
+import type { AnalyticsEvent } from "@/lib/analytics";
 
 type Variant = "primary" | "wire" | "primaryInvert";
 type ButtonProps = {
@@ -15,6 +16,10 @@ type ButtonProps = {
   onClick?: () => void;
   type?: "button" | "submit";
   className?: string; //layout only (display, margin, alignment, width)
+  /** Renders as a data-umami-event attribute — typed against the same
+   * union the analytics module tracks, so a typo here is a compile error
+   * instead of a silently missing event in Umami. */
+  trackEvent?: AnalyticsEvent;
 };
 
 const base = "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full px-6 py-2.5 text-label transition motion-safe:active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
@@ -25,7 +30,7 @@ const variants = {
   primaryInvert: "bg-text-invert text-surface-invert hover:bg-text-invert-dim",
 } satisfies Record<Variant, string>;
 
-export default function Button({ download, disabled, href, icon, iconPosition = "end", children, brackets, variant = "primary", onClick, type = "button", className }: ButtonProps) {
+export default function Button({ download, disabled, href, icon, iconPosition = "end", children, brackets, variant = "primary", onClick, type = "button", className, trackEvent }: ButtonProps) {
   const classes = cn(base, variants[variant], className);
   const content = (
     <>
@@ -39,16 +44,16 @@ export default function Button({ download, disabled, href, icon, iconPosition = 
 
   if (href) {
     if (download) {
-      return <a href={href} download onClick={onClick} className={classes}>{content}</a>;
+      return <a href={href} download onClick={onClick} className={classes} data-umami-event={trackEvent}>{content}</a>;
     }
     if (href.startsWith("http")) {
-      return <a href={href} target="_blank" rel="noopener noreferrer" onClick={onClick} className={classes}>{content}<span className="sr-only"> (opens in a new tab)</span></a>;
+      return <a href={href} target="_blank" rel="noopener noreferrer" onClick={onClick} className={classes} data-umami-event={trackEvent}>{content}<span className="sr-only"> (opens in a new tab)</span></a>;
     }
-    return <NavLink href={href} onClick={onClick} className={classes}>{content}</NavLink>;
+    return <NavLink href={href} onClick={onClick} className={classes} data-umami-event={trackEvent}>{content}</NavLink>;
   }
 
   return (
-    <button type={type} onClick={onClick} disabled={disabled} className={classes}>
+    <button type={type} onClick={onClick} disabled={disabled} className={classes} data-umami-event={trackEvent}>
       {content}
     </button>
   );
