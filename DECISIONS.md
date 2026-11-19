@@ -66,7 +66,7 @@ Astro is arguably the better technical fit for a mostly-static content site. Cho
 
 Pages can't run standalone output at all. Vercel would work with zero config. Chose the droplet because the infrastructure already existed, the marginal cost was near zero, and running Node behind nginx with systemd is a better answer to "how is your site deployed" than a platform default.
 
-Single environment for now. Staging goes on the same box — second systemd unit, second nginx vhost — when the contact form arrives.
+Single environment. If staging is added, it goes on the same box: a second systemd unit and a second nginx vhost.
 
 ### Work samples are real files in `/public`
 
@@ -91,14 +91,19 @@ The droplet never builds. Push to `main` triggers install, build, assembly of th
 
 Case studies, skills groups, and client entries live in TypeScript files. Single author, no editorial workflow — a CMS would be more infrastructure than the content justifies.
 
----
+### Search: generated robots.txt and sitemap
 
-## Open
+`app/robots.ts` and `app/sitemap.ts` produce `/robots.txt` (`text/plain`) and `/sitemap.xml` (`application/xml`). No static copies in `public/`, since they would collide with the generated routes. The sitemap maps over `caseStudies`, so a new study gets listed automatically. No `lastModified`: stamping `new Date()` would claim every page changed on every deploy.
 
-- **Client work permissions.** Pending answer from GSDM. Determines whether work samples are real, anonymized rebuilds, or a mix. Also whether client logos can be shown, and whether clients can be named in text even if assets can't be shown.
-- **Case study detail pages.** Only worth building if they hold content the homepage can't — process, code excerpts, the constraint that made it hard, QA matrix. If they'd just be longer versions of the cards, skip them. Cards stay self-contained until decided.
-- **Space Mono as a display face.** Revisit after seeing JetBrains at 48px in context.
-- **Third palette.** Revisit after living with the default for a week on real content.
+nginx proxies both routes straight to Node, so a common SPA failure (robots.txt falling through to the HTML app shell with a `200`) can't happen here. Verify after any nginx change: `curl -sI https://thomasbrandonhays.com/robots.txt` should return `200` / `text/plain`.
+
+No `llms.txt`: no major AI crawler reads it, and it isn't worth maintaining for zero effect. robots.txt allows all crawlers, including AI search and retrieval bots.
+
+### `/lab` is development-only
+
+`app/lab/layout.tsx` calls `notFound()` in production unless `ENABLE_LAB === "true"`, so `/lab` and any sub-routes return a real 404. `force-dynamic` makes it a runtime check, so turning it on needs a server restart, not a rebuild. It's excluded from the sitemap and deliberately *not* blocked in robots.txt: a crawler that can't load a page never sees its noindex.
+
+Not a basic-auth gate: a login wall serves nobody, since recruiters can't see it and I have it locally. If the catalog gets polished enough to show, set `ENABLE_LAB=true`, add `robots: { index: false }`, and link it from the footer as "Component library."
 
 ---
 
@@ -117,7 +122,7 @@ Established while building Tiers 0–2. These are the ones that cost time to red
 
 ---
 
-## Content & clearance
+## Content
 
 ### No fabricated claims
 
@@ -125,13 +130,9 @@ The comps shipped invented metrics (4.6M sends, 99.6% SLA, 52/52 Litmus, 100/100
 
 Only the commerce case study carries metrics, because it's the only one with figures that are provable.
 
-### Client work
+### Agency work is anonymized
 
-Two agency clients are fully restricted and appear nowhere in the repo.
-
-[CONFIDENTIAL CLIENT] work can be shown behind authentication but not publicly. The two SFMC case studies are anonymized — no branch names, no client sector, "sub-brands" rather than a brand count — and carry `gatedArtifacts: true`. The write-ups are public; only the rendered artifacts are gated.
-
-3–6 clients are cleared for display work. Get each clearance in writing with a date.
+Case studies from agency work name no clients. Where the rendered artifact can't be shown publicly, the write-up stays public and the artifact is gated (`gatedArtifacts: true`). The case study describes the problem and the engineering; the client isn't the point.
 
 ### Certifications
 
@@ -142,8 +143,7 @@ None held yet. The comp's badge row stays out of production until one is earned.
 ## Open
 
 - **Hero spec cards** removed. Replacing with a self-branded 728x90 as the first real unit in `/public/work/ads/`.
-- **Logo** is raster for now. Rebuild as SVG by construction in Illustrator, not by tracing — tracing produces one flattened path with no animatable structure.
-- **`scroll-padding-top: 5rem`** is a placeholder. Match it to the real header height once Header exists.
-- **`/lab` has `robots: noindex`.** Decide before launch whether the component catalog is public — it's arguably a portfolio piece in its own right.
-- **Case study detail pages.** The data files now carry `problem` / `approach` / `result` / `constraints` / `decisions` / `learned`, which is enough content to justify them. Build after the homepage.
+- **Logo animation.** The logo is now SVG (`TbhMark`, plus the favicon set). Animating it in the hero is still to do.
+- **`scroll-padding-top: 6.5rem LG 4rem MBL`
+- **Space Mono as a display face.** Revisit after seeing JetBrains at 48px in context.
 - **Third palette.** Revisit after living with monochrome on real content.
