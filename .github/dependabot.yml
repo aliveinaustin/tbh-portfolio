@@ -9,6 +9,20 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    ignore:
+      # @types/node is pinned to match the Node runtime major (currently 24)
+      # across the droplet, CI, and local — a Dependabot-proposed major bump
+      # would drift ahead of the actual runtime. Bump it manually alongside
+      # the next Node runtime upgrade instead.
+      - dependency-name: "@types/node"
+        update-types:
+          - "version-update:semver-major"
+      # TypeScript majors are declined until Next.js officially supports
+      # them — revisit by removing this entry, not by merging on a green
+      # check alone.
+      - dependency-name: "typescript"
+        update-types:
+          - "version-update:semver-major"
     open-pull-requests-limit: 5
 
   - package-ecosystem: "github-actions"
