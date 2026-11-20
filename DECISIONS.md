@@ -168,6 +168,16 @@ HSTS lives in nginx, not Next — it's meaningless without HTTPS, and nginx is w
 
 The home page's `alternates.canonical` lives in `app/page.tsx`'s own `metadata` export; each case study's canonical and `openGraph.url` live in `generateMetadata`, built from its own slug. A root-layout canonical would be wrong for every route except `/`.
 
+### Security monitoring
+
+GitHub, on `aliveinaustin/tbh-portfolio` (public): Dependabot alerts + security updates, secret scanning + push protection, and CodeQL default setup are all on. `.github/dependabot.yml` runs `npm` weekly (minor/patch grouped into one PR, majors stay separate so they get a real look) and `github-actions` monthly, both capped at 5 open PRs.
+
+CI runs `npm audit --omit=dev --audit-level=high` before the build, so a new high/critical production-reachable advisory fails the deploy instead of shipping quietly. First run hit the known `source-map-js` advisory (event-loop DoS parsing malicious source maps) that the pre-launch audit had already assessed as unreachable — it only runs during `next build`/postcss, never in the deployed standalone server. `npm audit fix` alone couldn't resolve it (the only real fix needs a semver-major bump in a parent package it won't force), so pinned it directly via `package.json`'s `overrides: { "source-map-js": "^1.2.2" }` instead — resolved cleanly to `1.2.4` with no dependency reshuffling, `npm audit --omit=dev --audit-level=high` now passes at 0 vulnerabilities. Confirmed the override didn't change anything else: `next build` produced the identical route table (same statics/dynamic split, same three case-study pages), and a standalone-server smoke test served the CSS bundle fine (`200`, 44 KB) — relevant since `source-map-js` is a `postcss` dependency and postcss processes all of the app's CSS.
+
+Overrides tend to outlive their reason, and Dependabot won't flag that the parent has fixed it upstream. Remove this one once `postcss` depends on `source-map-js` ≥1.2.2 itself — check with `npm ls source-map-js` on each Next/Tailwind major bump.
+
+Droplet: Ubuntu `unattended-upgrades` is enabled and active, installing security updates daily (`APT::Periodic::Unattended-Upgrade "1"`). Umami is updated by hand, not automatically — the image is pinned in `docker-compose.yml`, and updates happen by watching Umami's GitHub releases and following the backup-then-pull routine above. Automatic reboots are left off (`Unattended-Upgrade::Automatic-Reboot` is commented out, default `false`) so a restart never happens unwatched — check `/var/run/reboot-required` (and `/var/run/reboot-required.pkgs` for which packages triggered it) periodically and reboot by hand.
+
 ---
 
 ## Component conventions
