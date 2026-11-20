@@ -154,6 +154,8 @@ Events: `resume-download`, `outbound-linkedin`, `outbound-github`, and `contact-
 
 HSTS lives in nginx, not Next — it's meaningless without HTTPS, and nginx is what terminates TLS, so the app is one layer removed from where it actually matters. It's duplicated in all three places that answer over 443 (the main block, the `/work/` static-media location, and the www redirect block): nginx doesn't inherit a server-level `add_header` into a child location once that location sets its own (`/work/` already has one, for `Cache-Control`), so HSTS needed repeating there rather than just at the server level.
 
+Missed the Umami stats vhost the first time around — `stats.thomasbrandonhays.com` is a separate nginx config (`infra/umami/stats.thomasbrandonhays.com.conf`), not part of `portfolio.conf`, so it didn't get HSTS in the same pass. Caught during the post-reboot verification (a direct curl showed `200` with no `Strict-Transport-Security`), added, confirmed live. The lesson: HSTS and any other site-wide header policy needs checking against *every* vhost the domain and its subdomains answer on, not just the one serving the app. That file was also still missing certbot's 443 block entirely (never synced back after certbot first ran) — brought it in line with the live config at the same time, same mirror-and-resync convention as `portfolio.conf`.
+
 ### CSP is split: narrow directives enforced now, script/connect-src Report-Only
 
 `frame-ancestors 'self'; object-src 'none'; base-uri 'self'` is enforced immediately — none of those touch script or style loading, so nothing can regress.
