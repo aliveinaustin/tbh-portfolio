@@ -21,5 +21,12 @@ jobs:
         run: npm audit --omit=dev --audit-level=high
 
       - run: npm run lint
+
+      # tsc --noEmit needs Next's generated route types (LayoutProps,
+      # PageProps) to exist first — a fresh checkout has no .next/ yet,
+      # unlike every local run this session, which always had a stale
+      # one lying around from a prior build.
+      - run: npx next typegen
       - run: npx tsc --noEmit
+
       - run: npm run build

@@ -10,7 +10,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "check": "tsc --noEmit && next build",
+    "check": "next typegen && tsc --noEmit && next build",
     "prepare": "husky"
   },
   "dependencies": {
