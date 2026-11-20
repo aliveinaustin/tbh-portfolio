@@ -52,6 +52,14 @@ Switcher is deferred to the quality pass. The token layer is built now, which is
 
 Every fill, border, and text color goes through a semantic token. `bg-[#0f141a]` and `text-slate-400` don't follow a theme change, and the whole point of the token layer is that changing my mind about the palette costs minutes.
 
+### `--text-faint` contrast: 4.82:1, and why one gray can't serve both surfaces
+
+Pre-launch audit measured `--text-faint` at 4.16:1 against the darkest surface (`#060a10`) — under the 4.5:1 AA floor. Moved it from `#64748b` to `#6f7e95`: 4.82:1 against `#060a10`, still clearly dimmer than `--text-muted` (7.74:1 there), so the `text` > `text-muted` > `text-faint` hierarchy holds.
+
+The lesson that cost a re-check: brightening it broke two *other* labels that were already passing — `CopyPill`'s label and `Section`'s invert-variant eyebrow, both rendered on white (`surface-invert`) using this same dark-surface token. The old, darker value happened to clear 4.5:1 against white by coincidence; the brightened one didn't (4.12:1). Fixed by moving both to `text-text-invert-muted`, not by tuning `--text-faint` again — no single gray passes 4.5:1 against both near-black and white at once, which is exactly why the `-invert` token family (see above) exists. Anything on `surface-invert` must use it.
+
+Re-run Lighthouse on every page after any token change, not just the page the original finding came from — the regression above didn't show up until all four pages were checked, not just the one with the known issue.
+
 ---
 
 ## Architecture
@@ -140,6 +148,26 @@ Events: `resume-download`, `outbound-linkedin`, `outbound-github`, and `contact-
 
 `Button` gained a typed `trackEvent?: AnalyticsEvent` prop (renders `data-umami-event`) rather than forwarding arbitrary `data-*` attributes. The union lives in `lib/analytics.ts`, so a typo in an event name is a compile error instead of a silently missing event in Umami.
 
+### Security headers: Next sets app-level headers, nginx sets HSTS
+
+`next.config.ts`'s `headers()` sets `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy`, and the CSP (below). `poweredByHeader: false` drops the framework fingerprint.
+
+HSTS lives in nginx, not Next — it's meaningless without HTTPS, and nginx is what terminates TLS, so the app is one layer removed from where it actually matters. It's duplicated in all three places that answer over 443 (the main block, the `/work/` static-media location, and the www redirect block): nginx doesn't inherit a server-level `add_header` into a child location once that location sets its own (`/work/` already has one, for `Cache-Control`), so HSTS needed repeating there rather than just at the server level.
+
+### CSP is split: narrow directives enforced now, script/connect-src Report-Only
+
+`frame-ancestors 'self'; object-src 'none'; base-uri 'self'` is enforced immediately — none of those touch script or style loading, so nothing can regress.
+
+`script-src`/`connect-src` ride in a separate `Content-Security-Policy-Report-Only` header instead. `'unsafe-inline'` is required (Next's own hydration bootstrap is an inline script), and a nonce-based alternative would force every page to render dynamically instead of statically. Report-Only surfaces violations in the console without breaking anything, until there's a reason to enforce it.
+
+### Rate limiting: nginx, POST-only, via a method-keyed map
+
+`limit_req_zone` keys on a `map $request_method` variable that resolves to `$binary_remote_addr` for `POST` and an empty string otherwise — nginx's documented behavior for an empty zone key is to skip rate limiting for that request, so GETs pass through unmetered. 5 requests/minute per IP, burst of 3, `nodelay`, `limit_req_status 429`. The `map`/`limit_req_zone` live in `/etc/nginx/conf.d/rate-limit.conf` (http context — neither directive can sit inside a `server` block); the `limit_req` directive itself sits in `location /`.
+
+### Canonical URLs are per-page, not in the root layout
+
+The home page's `alternates.canonical` lives in `app/page.tsx`'s own `metadata` export; each case study's canonical and `openGraph.url` live in `generateMetadata`, built from its own slug. A root-layout canonical would be wrong for every route except `/`.
+
 ---
 
 ## Component conventions
@@ -154,6 +182,7 @@ Established while building Tiers 0–2. These are the ones that cost time to red
 - **Type utilities, one per element.** `text-display`, `text-label`, `text-code`. Don't stack `text-xs tracking-widest font-mono` — that's what the ramp replaced.
 - **Dynamic class names only work for hand-written CSS classes.** `` `triangle-${trend}` `` is fine because those live in `globals.css`. The same pattern with Tailwind utilities fails silently, because Tailwind scans source for complete strings.
 - **Tier 0–2 primitives live in `components/ui/`; Tier 3 page sections live in `components/`.** The test: could it drop into a different project unchanged?
+- **`scroll-padding-top` is `4rem` on mobile, `6.5rem` at `lg`.** Matched to the real header height (mobile `h-16`; desktop `h-20` + `lg:py-3`), so an anchor link (`/#work`, etc.) doesn't land with its target tucked under the sticky header.
 
 ---
 
@@ -179,6 +208,6 @@ None held yet. The comp's badge row stays out of production until one is earned.
 
 - **Hero spec cards** removed. Replacing with a self-branded 728x90 as the first real unit in `/public/work/ads/`.
 - **Logo animation.** The logo is now SVG (`TbhMark`, plus the favicon set). Animating it in the hero is still to do.
-- **`scroll-padding-top: 6.5rem LG 4rem MBL`
 - **Space Mono as a display face.** Revisit after seeing JetBrains at 48px in context.
 - **Third palette.** Revisit after living with monochrome on real content.
+- **CSP and work samples.** The Report-Only `script-src`/`connect-src` policy was only checked on pages without an iframed work sample. When the first real unit lands in `public/work/`, check the console on that page before ever considering enforcing the CSP — an iframed sample could need its own `frame-src` allowance, or load something `'self' 'unsafe-inline'` doesn't cover.
