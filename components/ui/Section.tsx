@@ -87,7 +87,7 @@ const variants = {
   // where it needs one (CaseStudyCard, DossierCard, etc.), so dropping this
   // changes nothing visible except letting the watermark show through.
   dark: { section: "text-text", eyebrow: "text-text-muted" },
-  invert: { section: "bg-surface-invert text-text-invert", eyebrow: "text-text-faint" },
+  invert: { section: "bg-surface-invert text-text-invert", eyebrow: "text-text-invert-muted" },
 } satisfies Record<Variant, { section: string; eyebrow: string }>;
 
 const spacings = {

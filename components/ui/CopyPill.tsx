@@ -35,7 +35,7 @@ export default function CopyPill({ label, value, className }: CopyPillProps) {
       )}
     >
       <span className="flex min-w-0 flex-col">
-        {label && <span className="text-code text-text-faint select-none">{label}</span>}
+        {label && <span className="text-code text-text-invert-muted select-none">{label}</span>}
         <span className="select-all truncate text-body-sm font-semibold text-text-invert">{value}</span>
       </span>
 
