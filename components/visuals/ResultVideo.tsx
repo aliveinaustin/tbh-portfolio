@@ -37,6 +37,11 @@ export default function ResultVideo() {
     // button is the whole experience unless the visitor asks for motion.
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       userPaused.current = true;
+      // A useState initializer would read matchMedia during the client's
+      // first render but not the server's, mismatching paused's hydrated
+      // value (it drives PauseButton's rendered props) — this has to wait
+      // until after hydration instead.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPaused(true);
     }
 

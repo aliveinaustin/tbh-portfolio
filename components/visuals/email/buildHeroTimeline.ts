@@ -237,29 +237,29 @@ export function buildHeroAssembly(tl: gsap.core.Timeline, scope: HTMLElement) {
   tl.addLabel("modules").set(modulesGroup, { opacity: 1 }).set(paletteModulesGroup, { opacity: 1 });
 
   ROWS.forEach((row, i) => {
-    const module = moduleFor(row.variant);
+    const moduleEl = moduleFor(row.variant);
     const rowOutline = rows.find((r) => r.getAttribute("data-row") === row.variant);
-    if (!module || !rowOutline) return;
+    if (!moduleEl || !rowOutline) return;
 
     const position = i === 0 ? "modules" : "<+=0.22";
 
     if (row.variant === "header") {
-      tl.fromTo(module, { y: -DROP, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3, ease: "power2.out" }, position);
+      tl.fromTo(moduleEl, { y: -DROP, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3, ease: "power2.out" }, position);
     } else if (row.variant === "text") {
       const native = PALETTE_ITEMS.find((p) => p.variant === "text")!;
       const scaleX = row.width / native.width;
       const scaleY = row.height / native.height;
       const targetY = row.y - native.y;
       tl.fromTo(
-        module,
+        moduleEl,
         { x: row.x - native.x, y: targetY - DROP, scaleX, scaleY, opacity: 0, transformOrigin: "0% 0%" },
         { y: targetY, opacity: 1, duration: 0.3, ease: "power2.out" },
         position
       );
     } else {
       const target = moduleRect(row.variant as SimpleModuleVariant, row);
-      tl.set(module, { attr: { x: target.x, y: target.y, width: target.width, height: target.height, rx: target.rx } }, position).fromTo(
-        module,
+      tl.set(moduleEl, { attr: { x: target.x, y: target.y, width: target.width, height: target.height, rx: target.rx } }, position).fromTo(
+        moduleEl,
         { y: -DROP, opacity: 0 },
         { y: 0, opacity: 1, duration: 0.3, ease: "power2.out" },
         "<"

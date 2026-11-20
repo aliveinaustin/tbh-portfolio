@@ -24,7 +24,7 @@ export default function ContactForm() {
         return (
             <div role="status" className="flex flex-col gap-3 lg:border-l lg:border-border lg:p-12">
                 <h3 className="text-subhead">Message sent</h3>
-                <p className="text-body text-text-muted">Thanks. I'll reply within one business day.</p>
+                <p className="text-body text-text-muted">Thanks. I&rsquo;ll reply within one business day.</p>
             </div>
         );
     }
