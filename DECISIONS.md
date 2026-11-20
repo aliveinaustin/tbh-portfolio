@@ -148,13 +148,13 @@ Events: `resume-download`, `outbound-linkedin`, `outbound-github`, and `contact-
 
 `Button` gained a typed `trackEvent?: AnalyticsEvent` prop (renders `data-umami-event`) rather than forwarding arbitrary `data-*` attributes. The union lives in `lib/analytics.ts`, so a typo in an event name is a compile error instead of a silently missing event in Umami.
 
-### Security headers: Next sets app-level headers, nginx sets HSTS
+### Security headers: Next for the app, nginx for HSTS and the stats. vhost
 
 `next.config.ts`'s `headers()` sets `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy`, and the CSP (below). `poweredByHeader: false` drops the framework fingerprint.
 
 HSTS lives in nginx, not Next — it's meaningless without HTTPS, and nginx is what terminates TLS, so the app is one layer removed from where it actually matters. It's duplicated in all three places that answer over 443 (the main block, the `/work/` static-media location, and the www redirect block): nginx doesn't inherit a server-level `add_header` into a child location once that location sets its own (`/work/` already has one, for `Cache-Control`), so HSTS needed repeating there rather than just at the server level.
 
-Missed the Umami stats vhost the first time around — `stats.thomasbrandonhays.com` is a separate nginx config (`infra/umami/stats.thomasbrandonhays.com.conf`), not part of `portfolio.conf`, so it didn't get HSTS in the same pass. Caught during the post-reboot verification (a direct curl showed `200` with no `Strict-Transport-Security`), added, confirmed live. The lesson: HSTS and any other site-wide header policy needs checking against *every* vhost the domain and its subdomains answer on, not just the one serving the app. That file was also still missing certbot's 443 block entirely (never synced back after certbot first ran) — brought it in line with the live config at the same time, same mirror-and-resync convention as `portfolio.conf`.
+Missed the Umami stats vhost the first time around — `stats.thomasbrandonhays.com` is a separate nginx config (`infra/umami/stats.thomasbrandonhays.com.conf`), not part of `portfolio.conf`, so it didn't get any of this in the same pass. Caught during the post-reboot verification (a direct curl showed `200` with no `Strict-Transport-Security`). The lesson: a site-wide header policy needs checking against *every* vhost the domain and its subdomains answer on, not just the one serving the app — applied it fully rather than just patching HSTS: `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, and `Content-Security-Policy: frame-ancestors 'self'` (Umami's own app already sends `frame-ancestors 'self'` in its own CSP, so this duplicates — harmless, browsers intersect multiple CSP headers — rather than conflicts; `stats.` serves Umami's login page, where `frame-ancestors` is what stops another site from framing it to trick a click). That file was also still missing certbot's 443 block entirely (never synced back after certbot first ran) — brought it in line with the live config at the same time, same mirror-and-resync convention as `portfolio.conf`.
 
 ### CSP is split: narrow directives enforced now, script/connect-src Report-Only
 
@@ -165,6 +165,8 @@ Missed the Umami stats vhost the first time around — `stats.thomasbrandonhays.
 ### Rate limiting: nginx, POST-only, via a method-keyed map
 
 `limit_req_zone` keys on a `map $request_method` variable that resolves to `$binary_remote_addr` for `POST` and an empty string otherwise — nginx's documented behavior for an empty zone key is to skip rate limiting for that request, so GETs pass through unmetered. 5 requests/minute per IP, burst of 3, `nodelay`, `limit_req_status 429`. The `map`/`limit_req_zone` live in `/etc/nginx/conf.d/rate-limit.conf` (http context — neither directive can sit inside a `server` block); the `limit_req` directive itself sits in `location /`.
+
+Applied only to the portfolio vhost. Never add it to `stats.`, because tracker POSTs would get 429s — Umami sends one POST per pageview and event, so copying this "for consistency" would make analytics silently drop data under normal browsing.
 
 ### Canonical URLs are per-page, not in the root layout
 
