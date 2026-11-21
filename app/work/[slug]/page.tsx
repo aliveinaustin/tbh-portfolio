@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, ResolvingMetadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { caseStudies, getCaseStudy, getNextCaseStudy, type CaseStudy } from "@/lib/case-studies";
@@ -25,10 +25,16 @@ export function generateStaticParams() {
     return caseStudies.map((s) => ({ slug: s.slug }));
 }
 
-export async function generateMetadata({ params }: PageProps<"/work/[slug]">): Promise<Metadata> {
+export async function generateMetadata({ params }: PageProps<"/work/[slug]">, parent: ResolvingMetadata): Promise<Metadata> {
     const { slug } = await params;
     const study = getCaseStudy(slug);
     if (!study) return {};
+    // Next merges a segment's own `openGraph` object shallowly against the
+    // parent's — setting `url` here alone replaces the whole object, wiping
+    // out the root's file-convention og:image (and the twitter:image Next
+    // auto-synthesizes from it) rather than adding to it. Spread the
+    // resolved parent openGraph in first so those survive.
+    const parentOG = (await parent).openGraph ?? {};
     return {
         title: study.title,
         description: study.summary,
@@ -36,6 +42,7 @@ export async function generateMetadata({ params }: PageProps<"/work/[slug]">): P
             canonical: `/work/${study.slug}`,
         },
         openGraph: {
+            ...parentOG,
             url: `/work/${study.slug}`,
         },
     };

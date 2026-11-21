@@ -21,7 +21,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Thomas B. Hays — HTML Email & SFMC Developer",
+    default: "Thomas B. Hays — Email & Front-End Developer",
     template: "%s — Thomas B. Hays",
   },
   description:
